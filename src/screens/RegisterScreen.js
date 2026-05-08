@@ -21,9 +21,11 @@ const RegisterScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [agree, setAgree] = useState(false);
 
+  // PickU Brand Green
+  const BRAND_GREEN = '#00A859';
+
   return (
     <View style={styles.mainBackground}>
-      {/* Ensures notification bar matches the app theme */}
       <StatusBar 
         barStyle="light-content" 
         backgroundColor="#0B1220" 
@@ -35,7 +37,6 @@ const RegisterScreen = ({ navigation }) => {
         style={{ flex: 1 }}
       >
         <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-          {/* Header Section with Dynamic Padding for Status Bar */}
           <MotiView 
             from={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -47,19 +48,18 @@ const RegisterScreen = ({ navigation }) => {
               style={styles.backButton}
               activeOpacity={0.7}
             >
-              <Feather name="arrow-left" size={28} color="#FFF" />
+              <Feather name="arrow-left" size={26} color="#FFF" />
             </TouchableOpacity>
           </MotiView>
 
           <View style={styles.contentContainer}>
-            {/* Top Icon */}
             <MotiView
               from={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', delay: 300 }}
               style={styles.iconCircle}
             >
-              <MaterialCommunityIcons name="account-plus-outline" size={40} color="#FFE45C" />
+              <MaterialCommunityIcons name="account-plus-outline" size={40} color={BRAND_GREEN} />
             </MotiView>
 
             <MotiText 
@@ -148,7 +148,7 @@ const RegisterScreen = ({ navigation }) => {
                   onChangeText={setPassword}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Feather name={showPassword ? "eye" : "eye-off"} size={20} color="#FFE45C" />
+                  <Feather name={showPassword ? "eye" : "eye-off"} size={20} color={BRAND_GREEN} />
                 </TouchableOpacity>
               </MotiView>
 
@@ -160,12 +160,12 @@ const RegisterScreen = ({ navigation }) => {
               >
                 <TouchableOpacity 
                   onPress={() => setAgree(!agree)}
-                  style={[styles.checkbox, agree && styles.checkboxActive]}
+                  style={[styles.checkbox, agree && { backgroundColor: BRAND_GREEN, borderColor: BRAND_GREEN }]}
                 >
-                  {agree && <Feather name="check" size={14} color="#000" />}
+                  {agree && <Feather name="check" size={14} color="#FFF" />}
                 </TouchableOpacity>
                 <Text style={styles.termsText}>
-                  I agree to the <Text style={styles.linkText}>Terms of Service</Text> and <Text style={styles.linkText}>Privacy Policy</Text>
+                  I agree to the <Text style={[styles.linkText, { color: BRAND_GREEN }]}>Terms of Service</Text> and <Text style={[styles.linkText, { color: BRAND_GREEN }]}>Privacy Policy</Text>
                 </Text>
               </MotiView>
 
@@ -174,7 +174,7 @@ const RegisterScreen = ({ navigation }) => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 1100, type: 'spring' }}
               >
-                <TouchableOpacity style={styles.continueBtn}>
+                <TouchableOpacity style={[styles.continueBtn, { backgroundColor: BRAND_GREEN }]} onPress={() => navigation.navigate('OTP')}>
                   <Text style={styles.continueBtnText}>Continue</Text>
                 </TouchableOpacity>
               </MotiView>
@@ -186,8 +186,8 @@ const RegisterScreen = ({ navigation }) => {
                 style={styles.footer}
               >
                 <Text style={styles.footerText}>Already have an account? </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('LoginScreen')}>
-                  <Text style={styles.signInText}>Sign In</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                  <Text style={[styles.signInText, { color: BRAND_GREEN }]}>Sign In</Text>
                 </TouchableOpacity>
               </MotiView>
             </View>
@@ -205,10 +205,18 @@ const styles = StyleSheet.create({
   },
   header: { 
     paddingHorizontal: 20, 
-    // This creates the gap between status bar and button
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 20,
-    height: Platform.OS === 'android' ? 90 : 70, 
-    justifyContent: 'center' 
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 50,
+    marginBottom: 10,
+  },
+  backButton: {
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   contentContainer: { 
     flex: 1, 
@@ -220,59 +228,57 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(255, 228, 92, 0.1)',
+    backgroundColor: 'rgba(0, 168, 89, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 228, 92, 0.2)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 168, 89, 0.2)',
   },
-  title: { fontSize: 32, fontWeight: '800', color: '#FFF', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#8E8E93', marginBottom: 30 },
+  title: { fontSize: 32, fontWeight: '900', color: '#FFF', marginBottom: 8, letterSpacing: -0.5 },
+  subtitle: { fontSize: 16, color: '#94A3B8', marginBottom: 30 },
   form: { width: '100%' },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 18,
     paddingHorizontal: 15,
-    height: 60,
-    marginBottom: 15,
+    height: 64,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   inputIcon: { marginRight: 12 },
-  input: { flex: 1, color: '#FFF', fontSize: 16 },
-  termsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 30, paddingRight: 20 },
+  input: { flex: 1, color: '#FFF', fontSize: 16, fontWeight: '500' },
+  termsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 35, paddingRight: 20 },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#FFE45C',
+    width: 22,
+    height: 22,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 168, 89, 0.5)',
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  checkboxActive: { backgroundColor: '#FFE45C' },
-  termsText: { color: '#8E8E93', fontSize: 13, lineHeight: 18 },
-  linkText: { color: '#FFE45C', fontWeight: '600' },
+  termsText: { color: '#94A3B8', fontSize: 13, lineHeight: 18 },
+  linkText: { fontWeight: '700' },
   continueBtn: {
-    backgroundColor: '#FFE45C',
-    height: 60,
-    borderRadius: 16,
+    height: 64,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#FFE45C',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowColor: '#00A859',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 15,
+    elevation: 8,
   },
-  continueBtnText: { color: '#000', fontSize: 18, fontWeight: '800' },
+  continueBtnText: { color: '#FFF', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 30 },
-  footerText: { color: '#8E8E93', fontSize: 15 },
-  signInText: { color: '#FFE45C', fontWeight: 'bold', fontSize: 15 },
+  footerText: { color: '#94A3B8', fontSize: 15 },
+  signInText: { fontWeight: '800', fontSize: 15 },
 });
 
 export default RegisterScreen;

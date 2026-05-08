@@ -62,9 +62,9 @@ const GetStartedScreen = ({ navigation }) => {
               >
                 <View style={styles.featureIconContainer}>
                   {item.type === 'feather' ? (
-                    <Feather name={item.icon} size={22} color="#FFE45C" />
+                    <Feather name={item.icon} size={22} color="#00A859" />
                   ) : (
-                    <MaterialCommunityIcons name={item.icon} size={24} color="#FFE45C" />
+                    <MaterialCommunityIcons name={item.icon} size={24} color="#00A859" />
                   )}
                 </View>
                 <View style={styles.featureTextContainer}>
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     width: 130, // Slightly bigger circle
     height: 130,
     borderRadius: 65,
-    backgroundColor: "rgba(255, 228, 92, 0.12)", // Soft glow effect
+    backgroundColor: "rgb(255, 255, 255)", // Soft glow effect
     justifyContent: "center",
     alignItems: "center",
     alignSelf: "center",
@@ -186,13 +186,13 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   getStartedButton: {
-    backgroundColor: "#FFE45C",
+    backgroundColor: "#00A859",
     height: 58,
     borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
     // Shadow for iOS
-    shadowColor: "#FFE45C",
+    shadowColor: "#00A859",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -202,13 +202,13 @@ const styles = StyleSheet.create({
   getStartedText: {
     fontSize: 17,
     fontWeight: "800",
-    color: "#000000",
+    color: "#ffffff",
   },
   signInButton: {
     height: 58,
     borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: "rgba(255, 228, 92, 0.3)",
+    borderColor: "rgba(95, 255, 92, 0.3)",
     justifyContent: "center",
     alignItems: "center",
   },

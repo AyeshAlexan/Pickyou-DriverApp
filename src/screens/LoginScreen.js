@@ -20,16 +20,17 @@ const LoginScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Using the brand green code you identified
+  const BRAND_GREEN = '#00A859';
+
   const handleLogin = () => {
     setIsLoading(true);
-    // Mimicking a server request
     setTimeout(() => {
       setIsLoading(false);
     }, 3000);
   };
 
   return (
-    // Matching main background color to prevent the flash
     <View style={styles.mainBackground}>
       <StatusBar 
         barStyle="light-content" 
@@ -46,7 +47,6 @@ const LoginScreen = ({ navigation }) => {
           bounces={false}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header Section with Status Bar offset */}
           <MotiView 
             from={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -56,8 +56,9 @@ const LoginScreen = ({ navigation }) => {
             <TouchableOpacity 
               onPress={() => navigation.goBack()} 
               activeOpacity={0.7}
+              style={styles.backButton}
             >
-              <Feather name="chevron-left" size={30} color="#FFF" />
+              <Feather name="chevron-left" size={28} color="#FFF" />
             </TouchableOpacity>
           </MotiView>
 
@@ -68,7 +69,7 @@ const LoginScreen = ({ navigation }) => {
               transition={{ type: 'spring', delay: 300 }}
               style={styles.iconCircle}
             >
-              <MaterialCommunityIcons name="car-connected" size={40} color="#FFE45C" />
+              <MaterialCommunityIcons name="car-connected" size={40} color={BRAND_GREEN} />
             </MotiView>
 
             <MotiText 
@@ -124,7 +125,7 @@ const LoginScreen = ({ navigation }) => {
                   onChangeText={setPassword}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Feather name={showPassword ? "eye" : "eye-off"} size={20} color="#FFE45C" />
+                  <Feather name={showPassword ? "eye" : "eye-off"} size={20} color={BRAND_GREEN} />
                 </TouchableOpacity>
               </MotiView>
 
@@ -144,7 +145,7 @@ const LoginScreen = ({ navigation }) => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 900, type: 'spring' }}
               >
-                <TouchableOpacity style={styles.loginBtn} onPress={handleLogin}>
+                <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} activeOpacity={0.9}>
                   <Text style={styles.loginBtnText}>Login</Text>
                 </TouchableOpacity>
               </MotiView>
@@ -189,7 +190,7 @@ const LoginScreen = ({ navigation }) => {
                 style={styles.footer}
               >
                 <Text style={styles.footerText}>Dont have an account? </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('RegisterScreen')}>
+                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
                   <Text style={styles.signUpText}>Sign Up</Text>
                 </TouchableOpacity>
               </MotiView>
@@ -198,7 +199,6 @@ const LoginScreen = ({ navigation }) => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Loading Modal - Ensuring same background color to kill the flash */}
       <Modal transparent visible={isLoading} animationType="fade">
         <View style={styles.loadingOverlay}>
           <MotiView
@@ -206,14 +206,14 @@ const LoginScreen = ({ navigation }) => {
             animate={{ translateX: 150, opacity: 1 }}
             transition={{ loop: true, duration: 1200, type: 'timing' }}
           >
-            <MaterialCommunityIcons name="car-sports" size={100} color="#FFE45C" />
+            <MaterialCommunityIcons name="car-sports" size={80} color={BRAND_GREEN} />
           </MotiView>
           <MotiText 
             animate={{ opacity: [0.4, 1, 0.4] }}
             transition={{ loop: true, duration: 1500, type: 'timing' }}
             style={styles.loadingText}
           >
-            Connecting to server...
+            Verifying...
           </MotiText>
         </View>
       </Modal>
@@ -224,86 +224,95 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   mainBackground: { 
     flex: 1, 
-    backgroundColor: '#0B1220', // Identical to the loading overlay
+    backgroundColor: '#0B1220', 
   },
   header: { 
-    paddingHorizontal: 15, 
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 20,
-    height: Platform.OS === 'android' ? 90 : 70, 
+    paddingHorizontal: 20, 
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 50,
+    marginBottom: 20,
+  },
+  backButton: {
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    backgroundColor: 'rgba(255,255,255,0.03)',
     justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   contentContainer: { 
     flex: 1, 
     paddingHorizontal: 30, 
     alignItems: 'center',
-    paddingBottom: 20 
+    paddingBottom: 40 
   },
   iconCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(255, 228, 92, 0.1)',
+    backgroundColor: 'rgba(0, 168, 89, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 228, 92, 0.2)',
+    marginBottom: 25,
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 168, 89, 0.2)',
   },
-  title: { fontSize: 32, fontWeight: '800', color: '#FFF', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#8E8E93', marginBottom: 40 },
+  title: { fontSize: 32, fontWeight: '900', color: '#FFF', marginBottom: 8, letterSpacing: -0.5 },
+  subtitle: { fontSize: 16, color: '#94A3B8', marginBottom: 40 },
   form: { width: '100%' },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 18,
     paddingHorizontal: 15,
-    height: 60,
-    marginBottom: 15,
+    height: 64,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   inputIcon: { marginRight: 12 },
-  input: { flex: 1, color: '#FFF', fontSize: 16 },
+  input: { flex: 1, color: '#FFF', fontSize: 16, fontWeight: '500' },
   forgotBtn: { alignSelf: 'flex-end', marginBottom: 30 },
-  forgotText: { color: '#FFE45C', fontWeight: '600' },
+  forgotText: { color: '#00A859', fontWeight: '700' },
   loginBtn: {
-    backgroundColor: '#FFE45C',
-    height: 60,
-    borderRadius: 16,
+    backgroundColor: '#00A859',
+    height: 64,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#FFE45C',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowColor: '#00A859',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 15,
+    elevation: 8,
   },
-  loginBtnText: { color: '#000', fontSize: 18, fontWeight: '800' },
+  loginBtnText: { color: '#FFF', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 },
   dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 35 },
-  line: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.1)' },
-  dividerText: { marginHorizontal: 15, color: '#8E8E93', fontSize: 14 },
+  line: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' },
+  dividerText: { marginHorizontal: 15, color: '#64748B', fontSize: 14, fontWeight: '500' },
   socialRow: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginBottom: 40 },
   socialBtn: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.03)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   footer: { flexDirection: 'row', justifyContent: 'center' },
-  footerText: { color: '#8E8E93', fontSize: 15 },
-  signUpText: { color: '#FFE45C', fontWeight: 'bold', fontSize: 15 },
+  footerText: { color: '#94A3B8', fontSize: 15 },
+  signUpText: { color: '#00A859', fontWeight: '800', fontSize: 15 },
   loadingOverlay: { 
     flex: 1, 
-    backgroundColor: '#0B1220', // MATCHING BACKGROUND TO PREVENT FLASH
+    backgroundColor: '#0B1220',
     justifyContent: 'center', 
     alignItems: 'center',
   },
-  loadingText: { color: '#FFF', marginTop: 30, fontSize: 18, fontWeight: '600', letterSpacing: 1 },
+  loadingText: { color: '#FFF', marginTop: 25, fontSize: 18, fontWeight: '700', letterSpacing: 1 },
 });
 
 export default LoginScreen;
