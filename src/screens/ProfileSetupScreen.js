@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { MotiText, MotiView } from "moti";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Platform,
   ScrollView,
@@ -10,11 +10,13 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Modal,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const ProfileSetupScreen = ({ navigation, route }) => {
-
   const currentStep = route?.params?.step || 1;
 
   const [formData, setFormData] = useState({
@@ -24,8 +26,58 @@ const ProfileSetupScreen = ({ navigation, route }) => {
     address: "",
   });
 
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
   const BRAND_GREEN = "#0B1220";
   const DARK_BG = "#00A859";
+
+  // Load data from local storage on mount
+  useEffect(() => {
+    loadFormData();
+  }, []);
+
+  const loadFormData = async () => {
+    try {
+      const savedData = await AsyncStorage.getItem("profileFormData");
+      if (savedData) {
+        setFormData(JSON.parse(savedData));
+      }
+    } catch (error) {
+      console.log("Error loading form data:", error);
+    }
+  };
+
+  const saveFormData = async (updatedData) => {
+    try {
+      await AsyncStorage.setItem(
+        "profileFormData",
+        JSON.stringify(updatedData),
+      );
+    } catch (error) {
+      console.log("Error saving form data:", error);
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    const updatedData = { ...formData, [field]: value };
+    setFormData(updatedData);
+    saveFormData(updatedData);
+  };
+
+  const formatDate = (date) => {
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+    const formattedDate = formatDate(date);
+    handleInputChange("dob", formattedDate);
+    setShowDatePicker(false);
+  };
 
   const renderSteps = () => {
     return [1, 2, 3].map((step) => (
@@ -41,9 +93,7 @@ const ProfileSetupScreen = ({ navigation, route }) => {
           <Text
             style={[
               styles.stepText,
-              currentStep >= step
-                ? { color: "#000" }
-                : { color: "#FFF" },
+              currentStep >= step ? { color: "#000" } : { color: "#FFF" },
             ]}
           >
             {step}
@@ -64,17 +114,9 @@ const ProfileSetupScreen = ({ navigation, route }) => {
       />
 
       {/* Header */}
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: DARK_BG },
-        ]}
-      >
-
+      <View style={[styles.header, { backgroundColor: DARK_BG }]}>
         {/* Progress */}
-        <View style={styles.progressRow}>
-          {renderSteps()}
-        </View>
+        <View style={styles.progressRow}>{renderSteps()}</View>
 
         <MotiText
           from={{ opacity: 0, y: 10 }}
@@ -84,8 +126,8 @@ const ProfileSetupScreen = ({ navigation, route }) => {
           {currentStep === 1
             ? "Driver Profile"
             : currentStep === 2
-            ? "Vehicle Details"
-            : "Documents"}
+              ? "Vehicle Details"
+              : "Documents"}
         </MotiText>
 
         <Text style={styles.headerSubtitle}>
@@ -101,7 +143,6 @@ const ProfileSetupScreen = ({ navigation, route }) => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-
         {/* Avatar */}
         <MotiView
           from={{ opacity: 0, scale: 0.8 }}
@@ -109,52 +150,33 @@ const ProfileSetupScreen = ({ navigation, route }) => {
           style={styles.avatarContainer}
         >
           <View style={styles.avatarCircle}>
-            <Feather
-              name="user"
-              size={45}
-              color="#CBD5E1"
-            />
+            <Feather name="user" size={45} color="#CBD5E1" />
           </View>
 
           <TouchableOpacity
-            style={[
-              styles.cameraBtn,
-              { backgroundColor: BRAND_GREEN },
-            ]}
+            style={[styles.cameraBtn, { backgroundColor: BRAND_GREEN }]}
           >
-            <Feather
-              name="camera"
-              size={16}
-              color="#FFF"
-            />
+            <Feather name="camera" size={16} color="#FFF" />
           </TouchableOpacity>
         </MotiView>
 
         {/* Form */}
         <View style={styles.form}>
-
           {/* Name */}
           <MotiView
             from={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 100 }}
           >
-            <Text style={styles.label}>
-              Full Name
-            </Text>
+            <Text style={styles.label}>Full Name</Text>
 
             <View style={styles.inputWrapper}>
               <TextInput
                 style={styles.input}
-                placeholder="Ayesh Anthonythasan"
+                placeholder="John Doe"
                 placeholderTextColor="#94A3B8"
                 value={formData.name}
-                onChangeText={(val) =>
-                  setFormData({
-                    ...formData,
-                    name: val,
-                  })
-                }
+                onChangeText={(val) => handleInputChange("name", val)}
               />
             </View>
           </MotiView>
@@ -165,9 +187,7 @@ const ProfileSetupScreen = ({ navigation, route }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 200 }}
           >
-            <Text style={styles.label}>
-              National ID / License Number
-            </Text>
+            <Text style={styles.label}>National ID / License Number</Text>
 
             <View style={styles.inputWrapper}>
               <Feather
@@ -182,12 +202,7 @@ const ProfileSetupScreen = ({ navigation, route }) => {
                 placeholder="V-XXXXXXXXX"
                 placeholderTextColor="#94A3B8"
                 value={formData.nic}
-                onChangeText={(val) =>
-                  setFormData({
-                    ...formData,
-                    nic: val,
-                  })
-                }
+                onChangeText={(val) => handleInputChange("nic", val)}
               />
             </View>
           </MotiView>
@@ -198,24 +213,30 @@ const ProfileSetupScreen = ({ navigation, route }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 300 }}
           >
-            <Text style={styles.label}>
-              Date of Birth
-            </Text>
+            <Text style={styles.label}>Date of Birth</Text>
 
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.input}
-                placeholder="DD / MM / YYYY"
-                placeholderTextColor="#94A3B8"
-                value={formData.dob}
-                onChangeText={(val) =>
-                  setFormData({
-                    ...formData,
-                    dob: val,
-                  })
-                }
+            <TouchableOpacity
+              style={styles.inputWrapper}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Feather
+                name="calendar"
+                size={18}
+                color="#94A3B8"
+                style={styles.inputIcon}
               />
-            </View>
+              <Text
+                style={[
+                  styles.input,
+                  {
+                    color: formData.dob ? "#0F172A" : "#94A3B8",
+                    paddingVertical: 0,
+                  },
+                ]}
+              >
+                {formData.dob || "DD / MM / YYYY"}
+              </Text>
+            </TouchableOpacity>
           </MotiView>
 
           {/* Address */}
@@ -224,32 +245,17 @@ const ProfileSetupScreen = ({ navigation, route }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 400 }}
           >
-            <Text style={styles.label}>
-              Address
-            </Text>
+            <Text style={styles.label}>Address</Text>
 
-            <View
-              style={[
-                styles.inputWrapper,
-                styles.textAreaWrapper,
-              ]}
-            >
+            <View style={[styles.inputWrapper, styles.textAreaWrapper]}>
               <TextInput
-                style={[
-                  styles.input,
-                  styles.textArea,
-                ]}
+                style={[styles.input, styles.textArea]}
                 placeholder="123 Main Street, City, State"
                 placeholderTextColor="#94A3B8"
                 multiline
                 numberOfLines={3}
                 value={formData.address}
-                onChangeText={(val) =>
-                  setFormData({
-                    ...formData,
-                    address: val,
-                  })
-                }
+                onChangeText={(val) => handleInputChange("address", val)}
               />
             </View>
           </MotiView>
@@ -265,25 +271,130 @@ const ProfileSetupScreen = ({ navigation, route }) => {
           >
             <TouchableOpacity
               activeOpacity={0.8}
-              style={[
-                styles.continueBtn,
-                { backgroundColor: BRAND_GREEN },
-              ]}
+              style={[styles.continueBtn, { backgroundColor: BRAND_GREEN }]}
+              onPress={() => navigation.navigate("VehicleDetails")}
             >
-              <Text style={styles.continueText}>
-                Continue
-              </Text>
+              <Text style={styles.continueText}>Continue</Text>
             </TouchableOpacity>
           </MotiView>
-
         </View>
       </ScrollView>
 
       {/* Bottom Safe Area */}
-      <SafeAreaView
-        edges={["bottom"]}
-        style={styles.bottomSafeArea}
-      />
+      <SafeAreaView edges={["bottom"]} style={styles.bottomSafeArea} />
+
+      {/* Date Picker Modal */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={showDatePicker}
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowDatePicker(false)}>
+          <View style={styles.datePickerOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={styles.datePickerContainer}>
+                <View style={styles.datePickerHeader}>
+                  <Text style={styles.datePickerTitle}>
+                    Select Date of Birth
+                  </Text>
+                  <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                    <Feather name="x" size={24} color="#0F172A" />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.datePickerContent}>
+                  <View style={styles.dateInputGroup}>
+                    <Text style={styles.dateLabel}>Day</Text>
+                    <View style={styles.dateNumberInput}>
+                      <TextInput
+                        style={styles.dateInput}
+                        placeholder="DD"
+                        placeholderTextColor="#94A3B8"
+                        value={String(selectedDate.getDate()).padStart(2, "0")}
+                        onChangeText={(val) => {
+                          if (val && !isNaN(val) && val <= 31) {
+                            const newDate = new Date(selectedDate);
+                            newDate.setDate(parseInt(val));
+                            setSelectedDate(newDate);
+                          }
+                        }}
+                        maxLength={2}
+                        keyboardType="number-pad"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.dateInputGroup}>
+                    <Text style={styles.dateLabel}>Month</Text>
+                    <View style={styles.dateNumberInput}>
+                      <TextInput
+                        style={styles.dateInput}
+                        placeholder="MM"
+                        placeholderTextColor="#94A3B8"
+                        value={String(selectedDate.getMonth() + 1).padStart(
+                          2,
+                          "0",
+                        )}
+                        onChangeText={(val) => {
+                          if (val && !isNaN(val) && val <= 12) {
+                            const newDate = new Date(selectedDate);
+                            newDate.setMonth(parseInt(val) - 1);
+                            setSelectedDate(newDate);
+                          }
+                        }}
+                        maxLength={2}
+                        keyboardType="number-pad"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.dateInputGroup}>
+                    <Text style={styles.dateLabel}>Year</Text>
+                    <View style={styles.dateNumberInput}>
+                      <TextInput
+                        style={styles.dateInput}
+                        placeholder="YYYY"
+                        placeholderTextColor="#94A3B8"
+                        value={String(selectedDate.getFullYear())}
+                        onChangeText={(val) => {
+                          if (val && !isNaN(val) && val.length === 4) {
+                            const newDate = new Date(selectedDate);
+                            newDate.setFullYear(parseInt(val));
+                            setSelectedDate(newDate);
+                          }
+                        }}
+                        maxLength={4}
+                        keyboardType="number-pad"
+                      />
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.datePickerActions}>
+                  <TouchableOpacity
+                    style={styles.datePickerBtn}
+                    onPress={() => setShowDatePicker(false)}
+                  >
+                    <Text style={styles.datePickerBtnText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.datePickerBtn,
+                      { backgroundColor: BRAND_GREEN },
+                    ]}
+                    onPress={() => handleDateSelect(selectedDate)}
+                  >
+                    <Text style={[styles.datePickerBtnText, { color: "#FFF" }]}>
+                      Done
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 };
@@ -295,10 +406,7 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    paddingTop:
-      Platform.OS === "android"
-        ? StatusBar.currentHeight + 25
-        : 70,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight + 25 : 70,
 
     paddingHorizontal: 25,
     paddingBottom: 28,
@@ -476,6 +584,91 @@ const styles = StyleSheet.create({
 
   bottomSafeArea: {
     backgroundColor: "#000",
+  },
+
+  // Date Picker Styles
+  datePickerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+
+  datePickerContainer: {
+    backgroundColor: "#FFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 30,
+  },
+
+  datePickerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+
+  datePickerTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+
+  datePickerContent: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 24,
+  },
+
+  dateInputGroup: {
+    alignItems: "center",
+    flex: 1,
+  },
+
+  dateLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#64748B",
+    marginBottom: 8,
+  },
+
+  dateNumberInput: {
+    width: "90%",
+    backgroundColor: "#F1F5F9",
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 8,
+  },
+
+  dateInput: {
+    width: "100%",
+    height: 50,
+    fontSize: 16,
+    fontWeight: "700",
+    textAlign: "center",
+    color: "#0F172A",
+  },
+
+  datePickerActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+
+  datePickerBtn: {
+    flex: 1,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: "#E2E8F0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  datePickerBtnText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0F172A",
   },
 });
 
