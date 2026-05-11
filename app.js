@@ -1,11 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
+
 import AppNavigator from "./src/navigation/AppNavigator";
 
 export default function App() {
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   return (
     <NavigationContainer>
-      <AppNavigator />
+      <AppNavigator
+        isLoggedIn={isLoggedIn}
+        setIsLoggedIn={setIsLoggedIn}
+      />
     </NavigationContainer>
   );
 }

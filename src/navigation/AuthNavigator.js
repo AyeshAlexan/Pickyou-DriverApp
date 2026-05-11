@@ -8,7 +8,8 @@ import OTPScreen from "../screens/OtpScreen";
 
 const Stack = createNativeStackNavigator();
 
-const AuthNavigator = () => {
+const AuthNavigator = ({ setIsLoggedIn }) => {
+
   return (
     <Stack.Navigator
       initialRouteName="GetStarted"
@@ -31,10 +32,15 @@ const AuthNavigator = () => {
         component={RegisterScreen}
       />
 
-      <Stack.Screen
-        name="OTP"
-        component={OTPScreen}
-      />
+      <Stack.Screen name="OTP">
+        {(props) => (
+          <OTPScreen
+            {...props}
+            setIsLoggedIn={setIsLoggedIn}
+          />
+        )}
+      </Stack.Screen>
+
     </Stack.Navigator>
   );
 };
