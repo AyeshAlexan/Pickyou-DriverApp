@@ -12,10 +12,13 @@ import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
 const HomeScreen = () => {
   const mapRef = useRef(null);
   const insets = useSafeAreaInsets(); // ✅ FIX 1: safe area control
+
+  const navigation = useNavigation();
 
   const [isOnline, setIsOnline] = useState(false);
 
@@ -74,7 +77,10 @@ const HomeScreen = () => {
             <Text style={styles.locationText}>Downtown Area</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.notificationButton}>
+          <TouchableOpacity 
+            style={styles.notificationButton} 
+            onPress={() => navigation.navigate("Notifications")} 
+          >
             <Feather name="bell" size={20} color="#0F172A" />
             <View style={styles.dot} />
           </TouchableOpacity>
