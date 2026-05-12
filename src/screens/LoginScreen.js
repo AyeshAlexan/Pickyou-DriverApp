@@ -304,7 +304,6 @@ const LoginScreen = ({ navigation, setIsLoggedIn }) => {
             transition={{ loop: true, duration: 1500, type: "timing" }}
             style={styles.loadingText}
           >
-            Verifying...
           </MotiText>
         </View>
       </Modal>
