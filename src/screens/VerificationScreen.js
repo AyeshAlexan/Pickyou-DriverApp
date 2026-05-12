@@ -129,7 +129,7 @@ const VerificationScreen = ({ navigation }) => {
 
       <TouchableOpacity
         style={styles.exploreBtn}
-        onPress={() => navigation.navigate("Home")} // Adjust to your route
+        onPress={() => navigation.replace("MainTabs")}
       >
         <Text style={styles.exploreText}>Explore the App</Text>
       </TouchableOpacity>
