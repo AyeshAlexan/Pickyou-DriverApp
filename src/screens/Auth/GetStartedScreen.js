@@ -1,16 +1,15 @@
-import React from "react";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { MotiView } from "moti"; // Make sure to: npx expo install moti react-native-reanimated
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  StatusBar,
   Image,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import { MotiView } from "moti"; // Make sure to: npx expo install moti react-native-reanimated
 
 const GetStartedScreen = ({ navigation }) => {
   return (
@@ -19,7 +18,6 @@ const GetStartedScreen = ({ navigation }) => {
 
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
-          
           {/* Main Logo Circle Section */}
           <MotiView
             from={{ opacity: 0, scale: 0.5 }}
@@ -28,7 +26,7 @@ const GetStartedScreen = ({ navigation }) => {
             style={styles.mainIconContainer}
           >
             <Image
-              source={require("../assets/logo.png")}
+              source={require("../../assets/logo.png")}
               style={styles.logoInsideCircle}
               resizeMode="contain"
             />
@@ -48,10 +46,25 @@ const GetStartedScreen = ({ navigation }) => {
 
           {/* Features List */}
           <View style={styles.featuresContainer}>
-            {[ 
-              { icon: "map-pin", title: "Drive on your schedule", sub: "Go online whenever you want, wherever you are", type: 'feather' },
-              { icon: "currency-usd", title: "Earn more money", sub: "Get paid weekly with competitive rates", type: 'material' },
-              { icon: "shield", title: "Safety first", sub: "24/7 support and insurance coverage", type: 'feather' }
+            {[
+              {
+                icon: "map-pin",
+                title: "Drive on your schedule",
+                sub: "Go online whenever you want, wherever you are",
+                type: "feather",
+              },
+              {
+                icon: "currency-usd",
+                title: "Earn more money",
+                sub: "Get paid weekly with competitive rates",
+                type: "material",
+              },
+              {
+                icon: "shield",
+                title: "Safety first",
+                sub: "24/7 support and insurance coverage",
+                type: "feather",
+              },
             ].map((item, index) => (
               <MotiView
                 key={index}
@@ -61,10 +74,14 @@ const GetStartedScreen = ({ navigation }) => {
                 style={styles.featureItem}
               >
                 <View style={styles.featureIconContainer}>
-                  {item.type === 'feather' ? (
+                  {item.type === "feather" ? (
                     <Feather name={item.icon} size={22} color="#00A859" />
                   ) : (
-                    <MaterialCommunityIcons name={item.icon} size={24} color="#00A859" />
+                    <MaterialCommunityIcons
+                      name={item.icon}
+                      size={24}
+                      color="#00A859"
+                    />
                   )}
                 </View>
                 <View style={styles.featureTextContainer}>
@@ -77,7 +94,7 @@ const GetStartedScreen = ({ navigation }) => {
         </View>
 
         {/* Bottom Buttons */}
-        <MotiView 
+        <MotiView
           from={{ opacity: 0, translateY: 50 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ delay: 800 }}
