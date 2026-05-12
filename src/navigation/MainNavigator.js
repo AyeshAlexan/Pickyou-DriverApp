@@ -3,6 +3,8 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import ProfileSetScreen from "../screens/ProfileSetupScreen";
 import VehicleDetailsScreen from "../screens/VehicleDeatilsScreem";
+import DocumentVefityscreen from "../screens/DocumnetVefityScreen";
+import VerificationScreen from "../screens/VerificationScreen";
 import BottomTabs from "./BottomTabs";
 
 const Stack = createNativeStackNavigator();
@@ -22,6 +24,16 @@ const MainNavigator = () => {
       <Stack.Screen
         name="VehicleDetails"
         component={VehicleDetailsScreen}
+      />
+
+      <Stack.Screen
+        name="Documentscreen"
+        component={DocumentVefityscreen}
+      />
+
+      <Stack.Screen
+        name="Verification"
+        component={VerificationScreen}
       />
 
     </Stack.Navigator>

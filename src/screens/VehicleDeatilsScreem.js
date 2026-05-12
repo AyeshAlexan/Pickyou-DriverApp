@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
+  Platform,
   ScrollView,
   StatusBar,
-  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
   TouchableWithoutFeedback,
+  View,
 } from "react-native";
 
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import { MotiView, MotiText, AnimatePresence } from "moti";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AnimatePresence, MotiText, MotiView } from "moti";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const VehicleDetailsScreen = ({ navigation }) => {
   const [vehicleType, setVehicleType] = useState("Car");
@@ -97,7 +97,12 @@ const VehicleDetailsScreen = ({ navigation }) => {
             {isCompleted ? (
               <Feather name="check" size={14} color={HEADER_BG} />
             ) : (
-              <Text style={[styles.stepText, { color: isActive ? HEADER_BG : "#FFF" }]}>
+              <Text
+                style={[
+                  styles.stepText,
+                  { color: isActive ? HEADER_BG : "#FFF" },
+                ]}
+              >
                 {step}
               </Text>
             )}
@@ -108,7 +113,8 @@ const VehicleDetailsScreen = ({ navigation }) => {
               <MotiView
                 from={{ width: step < 2 ? "100%" : "0%" }}
                 animate={{
-                  width: step < 2 || (step === 2 && isSubmitting) ? "100%" : "0%",
+                  width:
+                    step < 2 || (step === 2 && isSubmitting) ? "100%" : "0%",
                 }}
                 transition={{ type: "timing", duration: 500 }}
                 style={styles.stepLineFill}
@@ -122,12 +128,23 @@ const VehicleDetailsScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={HEADER_BG} translucent />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={HEADER_BG}
+        translucent
+      />
 
       <AnimatePresence>
         {showVehicleModal && (
-          <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={styles.modalOverlay}>
-            <TouchableWithoutFeedback onPress={() => setShowVehicleModal(false)}>
+          <MotiView
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={styles.modalOverlay}
+          >
+            <TouchableWithoutFeedback
+              onPress={() => setShowVehicleModal(false)}
+            >
               <View style={styles.modalOverlayInner}>
                 <MotiView
                   from={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -144,7 +161,11 @@ const VehicleDetailsScreen = ({ navigation }) => {
                         setShowVehicleModal(false);
                       }}
                     >
-                      <MaterialCommunityIcons name={item.icon} size={22} color="#0F172A" />
+                      <MaterialCommunityIcons
+                        name={item.icon}
+                        size={22}
+                        color="#0F172A"
+                      />
                       <Text style={styles.modalText}>{item.name}</Text>
                     </TouchableOpacity>
                   ))}
@@ -157,7 +178,10 @@ const VehicleDetailsScreen = ({ navigation }) => {
 
       <View style={[styles.header, { backgroundColor: HEADER_BG }]}>
         <View style={styles.headerTopRow}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
             <Feather name="arrow-left" size={22} color="#FFF" />
           </TouchableOpacity>
           <View style={styles.progressRow}>{renderSteps()}</View>
@@ -190,7 +214,10 @@ const VehicleDetailsScreen = ({ navigation }) => {
           >
             <View style={styles.dropdownLeft}>
               <MaterialCommunityIcons
-                name={vehicleOptions.find((item) => item.name === vehicleType)?.icon || "car"}
+                name={
+                  vehicleOptions.find((item) => item.name === vehicleType)
+                    ?.icon || "car"
+                }
                 size={22}
                 color="#0F172A"
               />
@@ -260,7 +287,12 @@ const VehicleDetailsScreen = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.label}>License Plate Number</Text>
           <View style={styles.inputWrapper}>
-            <MaterialCommunityIcons name="pound" size={18} color="#94A3B8" style={{ marginRight: 10 }} />
+            <MaterialCommunityIcons
+              name="pound"
+              size={18}
+              color="#94A3B8"
+              style={{ marginRight: 10 }}
+            />
             <TextInput
               placeholder="ABC-1234"
               placeholderTextColor="#94A3B8"
@@ -274,18 +306,26 @@ const VehicleDetailsScreen = ({ navigation }) => {
 
         <View style={styles.infoBox}>
           <View style={styles.infoHeader}>
-            <MaterialCommunityIcons name="car-outline" size={18} color="#2563EB" />
+            <MaterialCommunityIcons
+              name="car-outline"
+              size={18}
+              color="#2563EB"
+            />
             <Text style={styles.infoTitle}>Vehicle Requirements</Text>
           </View>
           <Text style={styles.infoText}>• Model year 2010 or newer</Text>
-          <Text style={styles.infoText}>• 4-door vehicle in good condition</Text>
-          <Text style={styles.infoText}>• Valid registration and insurance</Text>
+          <Text style={styles.infoText}>
+            • 4-door vehicle in good condition
+          </Text>
+          <Text style={styles.infoText}>
+            • Valid registration and insurance
+          </Text>
         </View>
 
         <TouchableOpacity
           activeOpacity={0.8}
           style={[styles.continueBtn, { backgroundColor: BRAND_GREEN }]}
-          onPress={handleContinue}
+          onPress={() => navigation.navigate("Documentscreen")}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -357,11 +397,26 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
   },
   headerTitleContainer: { marginLeft: 5 },
-  headerTitle: { fontSize: 24, fontWeight: "900", color: "#FFF", letterSpacing: -0.5 },
-  headerSubtitle: { color: "rgba(255,255,255,0.8)", fontSize: 13, marginTop: 4 },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "900",
+    color: "#FFF",
+    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    color: "rgba(255,255,255,0.8)",
+    fontSize: 13,
+    marginTop: 4,
+  },
   scrollContent: { paddingHorizontal: 25, paddingTop: 20, paddingBottom: 40 },
   section: { marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: "700", color: "#334155", marginBottom: 8, marginLeft: 4 },
+  label: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#334155",
+    marginBottom: 8,
+    marginLeft: 4,
+  },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -385,7 +440,12 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
   },
   dropdownLeft: { flexDirection: "row", alignItems: "center" },
-  dropdownText: { marginLeft: 12, fontSize: 15, fontWeight: "600", color: "#0F172A" },
+  dropdownText: {
+    marginLeft: 12,
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#0F172A",
+  },
   modalOverlay: {
     position: "absolute",
     top: 0,
@@ -395,7 +455,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
     zIndex: 999,
   },
-  modalOverlayInner: { flex: 1, justifyContent: "center", alignItems: "center" },
+  modalOverlayInner: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   modalContent: {
     width: "85%",
     backgroundColor: "#FFF",
@@ -403,8 +467,18 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     elevation: 10,
   },
-  modalItem: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 18 },
-  modalText: { marginLeft: 14, fontSize: 15, fontWeight: "700", color: "#0F172A" },
+  modalItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+  },
+  modalText: {
+    marginLeft: 14,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
   row: { flexDirection: "row", justifyContent: "space-between" },
   half: { width: "48%" },
   input: { flex: 1, fontSize: 15, fontWeight: "600", color: "#0F172A" },
@@ -418,7 +492,12 @@ const styles = StyleSheet.create({
     borderColor: "#DBEAFE",
   },
   infoHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  infoTitle: { marginLeft: 8, fontSize: 14, fontWeight: "800", color: "#2563EB" },
+  infoTitle: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#2563EB",
+  },
   infoText: { color: "#3B82F6", fontSize: 13, marginBottom: 4, marginLeft: 4 },
   continueBtn: {
     height: 60,
@@ -428,8 +507,13 @@ const styles = StyleSheet.create({
     marginTop: 5,
     elevation: 4,
   },
-  continueText: { fontSize: 17, fontWeight: "900", color: "#FFF", letterSpacing: 0.5 },
-  bottomSafe: { backgroundColor: "#FFF" },
+  continueText: {
+    fontSize: 17,
+    fontWeight: "900",
+    color: "#FFF",
+    letterSpacing: 0.5,
+  },
+  bottomSafe: { backgroundColor: "#000" },
 });
 
 export default VehicleDetailsScreen;
