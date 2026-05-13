@@ -7,7 +7,7 @@ import RegisterScreen from "../screens/Auth/RegisterScreen";
 
 const Stack = createNativeStackNavigator();
 
-const AuthNavigator = ({ setIsLoggedIn }) => {
+const AuthNavigator = ({ setIsLoggedIn, setIsNewUser }) => {
   return (
     <Stack.Navigator
       initialRouteName="GetStarted"
@@ -24,7 +24,13 @@ const AuthNavigator = ({ setIsLoggedIn }) => {
       <Stack.Screen name="Register" component={RegisterScreen} />
 
       <Stack.Screen name="OTP">
-        {(props) => <OTPScreen {...props} setIsLoggedIn={setIsLoggedIn} />}
+        {(props) => (
+          <OTPScreen
+            {...props}
+            setIsLoggedIn={setIsLoggedIn}
+            setIsNewUser={setIsNewUser}
+          />
+        )}
       </Stack.Screen>
     </Stack.Navigator>
   );

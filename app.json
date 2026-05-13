@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "DriverApp",
+    "name": "Pickyou Driver App",
     "slug": "DriverApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./src/assets/icon.png",
     "scheme": "driverapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

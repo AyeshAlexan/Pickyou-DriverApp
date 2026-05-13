@@ -14,9 +14,9 @@ import {
   Dimensions,
 } from "react-native";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
-const OTPScreen = ({ navigation, setIsLoggedIn }) => {
+const OTPScreen = ({ navigation, route, setIsLoggedIn, setIsNewUser }) => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(120);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +24,7 @@ const OTPScreen = ({ navigation, setIsLoggedIn }) => {
 
   const inputs = useRef([]);
   const BRAND_GREEN = "#00A859";
+  const isRegistration = route?.params?.isRegistration ?? false;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -58,7 +59,14 @@ const OTPScreen = ({ navigation, setIsLoggedIn }) => {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      setIsLoggedIn?.(true); // Navigate to Home after verification
+      if (isRegistration) {
+        // For registration flow: mark as new user and log in
+        setIsNewUser?.(true);
+        setIsLoggedIn?.(true);
+      } else {
+        // For login flow: just log in
+        setIsLoggedIn?.(true);
+      }
     }, 2500);
   };
 
@@ -66,14 +74,21 @@ const OTPScreen = ({ navigation, setIsLoggedIn }) => {
 
   return (
     <View style={styles.mainBackground}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="transparent"
+        translucent
+      />
 
       {/* --- BACKGROUND DECORATION --- */}
-      <MotiView 
+      <MotiView
         from={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: 'timing', duration: 2000 }}
-        style={[styles.graphicBlob, { top: -100, right: -50, backgroundColor: 'rgba(0, 168, 89, 0.12)' }]} 
+        transition={{ type: "timing", duration: 2000 }}
+        style={[
+          styles.graphicBlob,
+          { top: -100, right: -50, backgroundColor: "rgba(0, 168, 89, 0.12)" },
+        ]}
       />
 
       <KeyboardAvoidingView
@@ -117,7 +132,10 @@ const OTPScreen = ({ navigation, setIsLoggedIn }) => {
                 key={index}
                 animate={{
                   borderColor: focusedIndex === index ? BRAND_GREEN : "#E2E8F0",
-                  backgroundColor: focusedIndex === index ? "#FFFFFF" : "rgba(241, 245, 249, 0.8)",
+                  backgroundColor:
+                    focusedIndex === index
+                      ? "#FFFFFF"
+                      : "rgba(241, 245, 249, 0.8)",
                   scale: focusedIndex === index ? 1.05 : 1,
                 }}
                 style={styles.otpBox}
@@ -140,13 +158,23 @@ const OTPScreen = ({ navigation, setIsLoggedIn }) => {
           </View>
 
           <View style={styles.timerRow}>
-            <MaterialCommunityIcons name="clock-outline" size={18} color="#64748B" style={{ marginRight: 6 }} />
+            <MaterialCommunityIcons
+              name="clock-outline"
+              size={18}
+              color="#64748B"
+              style={{ marginRight: 6 }}
+            />
             <Text style={styles.timerText}>
-              {timer > 0 ? `Resend code in ${formatTime(timer)}` : "Didn't receive a code?"}
+              {timer > 0
+                ? `Resend code in ${formatTime(timer)}`
+                : "Didn't receive a code?"}
             </Text>
             {timer === 0 && (
               <TouchableOpacity onPress={() => setTimer(120)}>
-                <Text style={[styles.resendAction, { color: BRAND_GREEN }]}> Resend Now</Text>
+                <Text style={[styles.resendAction, { color: BRAND_GREEN }]}>
+                  {" "}
+                  Resend Now
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -175,7 +203,11 @@ const OTPScreen = ({ navigation, setIsLoggedIn }) => {
             animate={{ translateX: 100, opacity: 1 }}
             transition={{ loop: true, duration: 1200, type: "timing" }}
           >
-            <MaterialCommunityIcons name="car-sports" size={80} color={BRAND_GREEN} />
+            <MaterialCommunityIcons
+              name="car-sports"
+              size={80}
+              color={BRAND_GREEN}
+            />
           </MotiView>
           <MotiText
             animate={{ opacity: [0.4, 1, 0.4] }}
@@ -191,9 +223,9 @@ const OTPScreen = ({ navigation, setIsLoggedIn }) => {
 };
 
 const styles = StyleSheet.create({
-  mainBackground: { flex: 1, backgroundColor: "#FFFFFF", overflow: 'hidden' },
+  mainBackground: { flex: 1, backgroundColor: "#FFFFFF", overflow: "hidden" },
   graphicBlob: {
-    position: 'absolute',
+    position: "absolute",
     width: 350,
     height: 350,
     borderRadius: 150,
@@ -208,18 +240,18 @@ const styles = StyleSheet.create({
     width: 45,
     height: 45,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: "#E2E8F0",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
   },
-  contentContainer: { flex: 1, paddingHorizontal: 25, alignItems: 'center' },
+  contentContainer: { flex: 1, paddingHorizontal: 25, alignItems: "center" },
   title: {
     fontSize: 32,
     fontWeight: "900",
@@ -232,13 +264,13 @@ const styles = StyleSheet.create({
     color: "#64748B",
     marginBottom: 40,
     lineHeight: 22,
-    textAlign: 'center',
+    textAlign: "center",
   },
   phoneText: { fontWeight: "700" },
   otpContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: '100%',
+    width: "100%",
     marginBottom: 40,
   },
   otpBox: {
@@ -269,7 +301,7 @@ const styles = StyleSheet.create({
   },
   timerText: { color: "#64748B", fontSize: 15, fontWeight: "500" },
   resendAction: { fontWeight: "800", fontSize: 15 },
-  buttonWrapper: { width: '100%', marginTop: 'auto', marginBottom: 50 },
+  buttonWrapper: { width: "100%", marginTop: "auto", marginBottom: 50 },
   verifyBtn: {
     height: 64,
     borderRadius: 20,

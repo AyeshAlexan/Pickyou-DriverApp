@@ -11,10 +11,10 @@ import BottomTabs from "./BottomTabs";
 
 const Stack = createNativeStackNavigator();
 
-const MainNavigator = () => {
+const MainNavigator = ({ isNewUser = false, setIsNewUser }) => {
   return (
     <Stack.Navigator
-      initialRouteName="MainTabs"
+      initialRouteName={isNewUser ? "ProfileSet" : "MainTabs"}
       screenOptions={{
         headerShown: false,
       }}
@@ -29,18 +29,18 @@ const MainNavigator = () => {
       <Stack.Screen name="MainTabs" component={BottomTabs} />
 
       {/* App Sub-Pages */}
-      <Stack.Screen 
-        name="Notifications" 
-        component={NotificationScreen} 
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationScreen}
         options={{
-          animation: 'slide_from_right', // Smooth transition
+          animation: "slide_from_right", // Smooth transition
         }}
       />
-      <Stack.Screen 
-        name="TripDetails" 
-        component={TripDetailsScreen} 
+      <Stack.Screen
+        name="TripDetails"
+        component={TripDetailsScreen}
         options={{
-          animation: 'slide_from_right', // Smooth transition
+          animation: "slide_from_right", // Smooth transition
         }}
       />
     </Stack.Navigator>

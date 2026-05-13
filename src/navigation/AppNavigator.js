@@ -6,14 +6,13 @@ import MainNavigator from "./MainNavigator";
 const AppNavigator = ({
   isLoggedIn,
   setIsLoggedIn,
+  isNewUser,
+  setIsNewUser,
 }) => {
-
   return isLoggedIn ? (
-    <MainNavigator />
+    <MainNavigator isNewUser={isNewUser} setIsNewUser={setIsNewUser} />
   ) : (
-    <AuthNavigator
-      setIsLoggedIn={setIsLoggedIn}
-    />
+    <AuthNavigator setIsLoggedIn={setIsLoggedIn} setIsNewUser={setIsNewUser} />
   );
 };
 
