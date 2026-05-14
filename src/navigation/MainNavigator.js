@@ -6,6 +6,8 @@ import VehicleDetailsScreen from "../screens/VehicleDeatilsScreem";
 import VerificationScreen from "../screens/VerificationScreen";
 import NotificationScreen from "../screens/NotificationScreen";
 import TripDetailsScreen from "../screens/Main Screen/TripDetailsScreen";
+import EditProfileScreen from "../screens/Main Screen/EditProfileScreen";
+import EditVehicleScreen from "../screens//Main Screen/EditVehicleScreem";
 
 import BottomTabs from "./BottomTabs";
 
@@ -39,6 +41,20 @@ const MainNavigator = ({ isNewUser = false, setIsNewUser }) => {
       <Stack.Screen
         name="TripDetails"
         component={TripDetailsScreen}
+        options={{
+          animation: "slide_from_right", // Smooth transition
+        }}
+      />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{
+          animation: "slide_from_right", // Smooth transition
+        }}
+      />
+      <Stack.Screen
+        name="EditVehicle"
+        component={EditVehicleScreen}
         options={{
           animation: "slide_from_right", // Smooth transition
         }}
