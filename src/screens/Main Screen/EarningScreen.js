@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient"; // Ensure this is imported
 
 const { width } = Dimensions.get("window");
 
@@ -56,10 +57,13 @@ const EarningsScreen = () => {
       <ScrollView 
         showsVerticalScrollIndicator={false} 
         bounces={false}
-        contentContainerStyle={styles.scrollContent} // Added for bottom padding
+        contentContainerStyle={styles.scrollContent}
       >
-        {/* Updated Green Header */}
-        <View style={styles.header}>
+        {/* Updated Header with LinearGradient */}
+        <LinearGradient
+          colors={['#00A859', '#007A41']}
+          style={styles.headerGradient}
+        >
           <SafeAreaView edges={["top"]}>
             <Text style={styles.headerTitle}>Earnings</Text>
             
@@ -85,7 +89,7 @@ const EarningsScreen = () => {
               </View>
             </Animated.View>
           </SafeAreaView>
-        </View>
+        </LinearGradient>
 
         <View style={styles.content}>
           <Text style={styles.sectionTitle}>This Week</Text>
@@ -140,7 +144,7 @@ export default EarningsScreen;
 const styles = StyleSheet.create({
   mainWrapper: { flex: 1, backgroundColor: "#FFF" },
   scrollContent: {
-    paddingBottom: 120, // INCREASED padding to ensure the goal card isn't hidden by the bottom navbar
+    paddingBottom: 120,
   },
   circleGraphic: {
     position: "absolute",
@@ -151,13 +155,11 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     backgroundColor: "rgba(0, 168, 89, 0.05)",
   },
-  header: {
-    backgroundColor: "#00a85a", // BRAND GREEN
+  headerGradient: {
     paddingHorizontal: 24,
     paddingBottom: 40,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
-    // Subtle shadow for the header
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -189,7 +191,7 @@ const styles = StyleSheet.create({
   barWrapper: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", height: 150 },
   barColumn: { alignItems: "center", gap: 8, flex: 1 },
   bar: { width: 12, backgroundColor: "#E2E8F0", borderRadius: 6 },
-  activeBar: { backgroundColor: "#00A859" }, // Matching the green theme
+  activeBar: { backgroundColor: "#00A859" },
   barLabel: { fontSize: 10, color: "#64748B", fontWeight: "600" },
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 24 },
   statCard: { width: (width - 60) / 2, padding: 16, borderRadius: 24 },

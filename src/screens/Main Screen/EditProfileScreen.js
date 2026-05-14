@@ -40,8 +40,8 @@ const EditProfileScreen = ({ navigation }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        {/* Header matching your Profile Screen style */}
-        <LinearGradient colors={['#0F172A', '#1E293B']} style={styles.header}>
+        {/* Updated Header with Green/Dark Gradient */}
+        <LinearGradient colors={['#00A859', '#007A41']} style={styles.header}>
           <SafeAreaView edges={['top']}>
             <View style={styles.navRow}>
               <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -55,10 +55,10 @@ const EditProfileScreen = ({ navigation }) => {
           </SafeAreaView>
         </LinearGradient>
 
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Profile Picture Section */}
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Updated Profile Picture Section */}
           <View style={styles.avatarSection}>
-            <LinearGradient colors={['#A855F7', '#EC4899']} style={styles.avatarLarge}>
+            <LinearGradient colors={['#00A859', '#007A41']} style={styles.avatarLarge}>
               <Text style={styles.avatarTextLarge}>{name.charAt(0)}</Text>
               <TouchableOpacity style={styles.editPhotoBadge}>
                 <Feather name="camera" size={14} color="#FFF" />
@@ -109,9 +109,10 @@ const styles = StyleSheet.create({
   mainContainer: { flex: 1, backgroundColor: '#F8FAFC' },
   header: {
     paddingHorizontal: 16,
-    paddingBottom: 20,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingBottom: 25,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    elevation: 5,
   },
   navRow: {
     flexDirection: 'row',
@@ -129,7 +130,7 @@ const styles = StyleSheet.create({
   },
   saveBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
   
-  scrollContent: { padding: 24 },
+  scrollContent: { padding: 24, paddingBottom: 60 },
   avatarSection: {
     alignItems: 'center',
     marginBottom: 32,
@@ -142,8 +143,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
     elevation: 4,
-    shadowColor: '#EC4899',
-    shadowOpacity: 0.3,
+    shadowColor: '#00A859',
+    shadowOpacity: 0.2,
     shadowRadius: 10,
   },
   avatarTextLarge: { color: '#FFF', fontSize: 36, fontWeight: '800' },
@@ -178,19 +179,20 @@ const styles = StyleSheet.create({
   },
   inputWrapper: { marginBottom: 20 },
   inputLabel: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
     color: '#94A3B8',
     marginBottom: 8,
     marginLeft: 4,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F1F5F9',
     borderRadius: 14,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     height: 56,
   },
   inputIcon: { marginRight: 10 },
@@ -215,4 +217,5 @@ const styles = StyleSheet.create({
     color: '#166534',
     lineHeight: 18,
   },
+  
 });

@@ -1,4 +1,3 @@
-import React from "react";
 
 import AuthNavigator from "./AuthNavigator";
 import MainNavigator from "./MainNavigator";
@@ -10,7 +9,11 @@ const AppNavigator = ({
   setIsNewUser,
 }) => {
   return isLoggedIn ? (
-    <MainNavigator isNewUser={isNewUser} setIsNewUser={setIsNewUser} />
+    <MainNavigator
+      isNewUser={isNewUser}
+      setIsNewUser={setIsNewUser}
+      setIsLoggedIn={setIsLoggedIn}
+    />
   ) : (
     <AuthNavigator setIsLoggedIn={setIsLoggedIn} setIsNewUser={setIsNewUser} />
   );

@@ -1,19 +1,19 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
+import EditVehicleScreen from "../screens//Main Screen/EditVehicleScreem";
 import DocumentVefityscreen from "../screens/DocumnetVefityScreen";
+import EditProfileScreen from "../screens/Main Screen/EditProfileScreen";
+import TripDetailsScreen from "../screens/Main Screen/TripDetailsScreen";
+import NotificationScreen from "../screens/NotificationScreen";
 import ProfileSetScreen from "../screens/ProfileSetupScreen";
 import VehicleDetailsScreen from "../screens/VehicleDeatilsScreem";
 import VerificationScreen from "../screens/VerificationScreen";
-import NotificationScreen from "../screens/NotificationScreen";
-import TripDetailsScreen from "../screens/Main Screen/TripDetailsScreen";
-import EditProfileScreen from "../screens/Main Screen/EditProfileScreen";
-import EditVehicleScreen from "../screens//Main Screen/EditVehicleScreem";
 
 import BottomTabs from "./BottomTabs";
 
 const Stack = createNativeStackNavigator();
 
-const MainNavigator = ({ isNewUser = false, setIsNewUser }) => {
+const MainNavigator = ({ isNewUser = false, setIsNewUser, setIsLoggedIn }) => {
   return (
     <Stack.Navigator
       initialRouteName={isNewUser ? "ProfileSet" : "MainTabs"}
@@ -28,7 +28,14 @@ const MainNavigator = ({ isNewUser = false, setIsNewUser }) => {
       <Stack.Screen name="Verification" component={VerificationScreen} />
 
       {/* Main App */}
-      <Stack.Screen name="MainTabs" component={BottomTabs} />
+      <Stack.Screen
+        name="MainTabs"
+        options={{
+          headerShown: false,
+        }}
+      >
+        {(props) => <BottomTabs {...props} setIsLoggedIn={setIsLoggedIn} />}
+      </Stack.Screen>
 
       {/* App Sub-Pages */}
       <Stack.Screen

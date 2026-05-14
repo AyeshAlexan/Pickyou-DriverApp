@@ -3,10 +3,10 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { BlurView } from "expo-blur";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import Animated, {
-  FadeIn,
-  FadeOut,
-  useAnimatedStyle,
-  withSpring,
+    FadeIn,
+    FadeOut,
+    useAnimatedStyle,
+    withSpring,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -99,10 +99,7 @@ const CustomTabBar = ({ state, navigation }) => {
                 />
               )}
 
-              <AnimatedTabIcon
-                focused={focused}
-                iconName={iconName}
-              />
+              <AnimatedTabIcon focused={focused} iconName={iconName} />
             </TouchableOpacity>
           );
         })}
@@ -114,12 +111,9 @@ const CustomTabBar = ({ state, navigation }) => {
 /* =========================
    NAVIGATION
 ========================= */
-const BottomTabs = () => {
+const BottomTabs = ({ setIsLoggedIn }) => {
   return (
-    <SafeAreaView
-      edges={["bottom"]}
-      style={styles.safeAreaContainer}
-    >
+    <SafeAreaView edges={["bottom"]} style={styles.safeAreaContainer}>
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
@@ -134,25 +128,22 @@ const BottomTabs = () => {
         }}
         tabBar={(props) => <CustomTabBar {...props} />}
       >
-        <Tab.Screen
-          name="Home"
-          component={HomeScreen}
-        />
+        <Tab.Screen name="Home" component={HomeScreen} />
 
-        <Tab.Screen
-          name="Earnings"
-          component={EarningsScreen}
-        />
+        <Tab.Screen name="Earnings" component={EarningsScreen} />
 
-        <Tab.Screen
-          name="Activity"
-          component={ActivityScreen}
-        />
+        <Tab.Screen name="Activity" component={ActivityScreen} />
 
         <Tab.Screen
           name="Profile"
-          component={ProfileScreen}
-        />
+          options={{
+            headerShown: false,
+          }}
+        >
+          {(props) => (
+            <ProfileScreen {...props} setIsLoggedIn={setIsLoggedIn} />
+          )}
+        </Tab.Screen>
       </Tab.Navigator>
     </SafeAreaView>
   );

@@ -10,14 +10,15 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native"; // Added hook
+import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient"; // Added LinearGradient
 
 const dummyTrips = [
   {
     id: "1",
     destination: "Kandy City Centre",
     date: "Today, 12:30 PM",
-    amount: "$12.50",
+    amount: "Rs.1,250",
     status: "Completed",
     distance: "4.2 km",
   },
@@ -25,7 +26,7 @@ const dummyTrips = [
     id: "2",
     destination: "Peradeniya Botanical Garden",
     date: "Today, 10:15 AM",
-    amount: "$18.20",
+    amount: "Rs.1,820",
     status: "Completed",
     distance: "7.1 km",
   },
@@ -33,7 +34,7 @@ const dummyTrips = [
     id: "3",
     destination: "Getambe Temple",
     date: "Yesterday, 06:45 PM",
-    amount: "$0.00",
+    amount: "Rs.0.00",
     status: "Cancelled",
     distance: "2.5 km",
   },
@@ -41,7 +42,7 @@ const dummyTrips = [
     id: "4",
     destination: "Amaya Hills Kandy",
     date: "Yesterday, 04:20 PM",
-    amount: "$25.00",
+    amount: "Rs.2,500",
     status: "Completed",
     distance: "12.0 km",
   },
@@ -49,14 +50,14 @@ const dummyTrips = [
     id: "5",
     destination: "Dalada Maligawa",
     date: "10 May, 09:00 AM",
-    amount: "$10.80",
+    amount: "Rs.1,080",
     status: "Completed",
     distance: "3.8 km",
   },
 ];
 
 const ActivityScreen = () => {
-  const navigation = useNavigation(); // Initialize navigation
+  const navigation = useNavigation();
   const [filter, setFilter] = useState("All");
 
   const fadeAnims = useRef(dummyTrips.map(() => new Animated.Value(0))).current;
@@ -90,7 +91,6 @@ const ActivityScreen = () => {
       <TouchableOpacity 
         style={styles.tripCard} 
         activeOpacity={0.7}
-        // Navigation trigger added here
         onPress={() => navigation.navigate("TripDetails", { trip: item })}
       >
         <View style={styles.tripIconContainer}>
@@ -121,7 +121,11 @@ const ActivityScreen = () => {
     <View style={styles.mainWrapper}>
       <StatusBar barStyle="light-content" />
       
-      <View style={styles.header}>
+      {/* Updated Header with LinearGradient */}
+      <LinearGradient
+        colors={['#00A859', '#007A41']}
+        style={styles.headerGradient}
+      >
         <SafeAreaView edges={["top"]}>
           <Text style={styles.headerTitle}>Trip History</Text>
           
@@ -139,7 +143,7 @@ const ActivityScreen = () => {
             ))}
           </View>
         </SafeAreaView>
-      </View>
+      </LinearGradient>
 
       <View style={styles.content}>
         {dummyTrips.length > 0 ? (
@@ -168,8 +172,7 @@ export default ActivityScreen;
 
 const styles = StyleSheet.create({
   mainWrapper: { flex: 1, backgroundColor: "#F8FAFC" },
-  header: {
-    backgroundColor: "#00A859",
+  headerGradient: {
     paddingHorizontal: 24,
     paddingBottom: 30,
     borderBottomLeftRadius: 32,

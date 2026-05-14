@@ -40,22 +40,22 @@ const VehicleDetailsScreen = ({ navigation }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        {/* Header matching Profile & Personal Info */}
-        <LinearGradient colors={['#0F172A', '#1E293B']} style={styles.header}>
+        {/* Header updated with brand green gradient */}
+        <LinearGradient colors={['#00A859', '#007A41']} style={styles.header}>
           <SafeAreaView edges={['top']}>
             <View style={styles.navRow}>
               <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                 <Feather name="arrow-left" size={24} color="#FFF" />
               </TouchableOpacity>
               <Text style={styles.headerTitle}>Vehicle Details</Text>
-              <TouchableOpacity style={styles.saveBtn}>
+              <TouchableOpacity style={styles.saveBtn} activeOpacity={0.8}>
                 <Text style={styles.saveBtnText}>Update</Text>
               </TouchableOpacity>
             </View>
           </SafeAreaView>
         </LinearGradient>
 
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Vehicle Display Section */}
           <View style={styles.vehicleCard}>
             <View style={styles.iconCircle}>
@@ -90,15 +90,15 @@ const VehicleDetailsScreen = ({ navigation }) => {
             />
           </View>
 
-          {/* Photo Section - Visual reference for high-end photography interest */}
+          {/* Photo Section */}
           <Text style={styles.sectionTitle}>Vehicle Photos</Text>
           <View style={styles.photoGrid}>
             <TouchableOpacity style={styles.photoBox}>
-              <Feather name="camera" size={24} color="#94A3B8" />
+              <Feather name="camera" size={24} color="#00A859" />
               <Text style={styles.photoLabel}>Front View</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.photoBox}>
-              <Feather name="camera" size={24} color="#94A3B8" />
+              <Feather name="camera" size={24} color="#00A859" />
               <Text style={styles.photoLabel}>Side View</Text>
             </TouchableOpacity>
           </View>
@@ -121,9 +121,14 @@ const styles = StyleSheet.create({
   mainContainer: { flex: 1, backgroundColor: '#F8FAFC' },
   header: {
     paddingHorizontal: 16,
-    paddingBottom: 20,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingBottom: 25,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
   },
   navRow: {
     flexDirection: 'row',
@@ -134,7 +139,7 @@ const styles = StyleSheet.create({
   headerTitle: { color: '#FFF', fontSize: 18, fontWeight: '800' },
   backBtn: { width: 44, height: 44, justifyContent: 'center' },
   saveBtn: {
-    backgroundColor: '#00A859',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 12,
@@ -176,18 +181,19 @@ const styles = StyleSheet.create({
   },
   inputWrapper: { marginBottom: 20 },
   inputLabel: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
     color: '#94A3B8',
     marginBottom: 8,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F1F5F9',
     borderRadius: 14,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     height: 56,
   },
   inputIcon: { marginRight: 10 },
@@ -207,11 +213,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#E2E8F0',
+    borderColor: '#00A85933', // Subtle brand color for the border
     justifyContent: 'center',
     alignItems: 'center',
   },
-  photoLabel: { fontSize: 12, color: '#94A3B8', marginTop: 8, fontWeight: '600' },
+  photoLabel: { fontSize: 12, color: '#00A859', marginTop: 8, fontWeight: '600' },
 
   warningBox: {
     flexDirection: 'row',
