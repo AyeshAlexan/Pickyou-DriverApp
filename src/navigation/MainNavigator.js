@@ -8,7 +8,7 @@ import NotificationScreen from "../screens/NotificationScreen";
 import ProfileSetScreen from "../screens/ProfileSetupScreen";
 import VehicleDetailsScreen from "../screens/VehicleDeatilsScreem";
 import VerificationScreen from "../screens/VerificationScreen";
-
+import DocumentsScreen from "../screens/Main Screen/DocumentsScreen";
 import BottomTabs from "./BottomTabs";
 
 const Stack = createNativeStackNavigator();
@@ -62,6 +62,13 @@ const MainNavigator = ({ isNewUser = false, setIsNewUser, setIsLoggedIn }) => {
       <Stack.Screen
         name="EditVehicle"
         component={EditVehicleScreen}
+        options={{
+          animation: "slide_from_right", // Smooth transition
+        }}
+      />
+      <Stack.Screen
+        name="Documents"
+        component={DocumentsScreen}
         options={{
           animation: "slide_from_right", // Smooth transition
         }}
