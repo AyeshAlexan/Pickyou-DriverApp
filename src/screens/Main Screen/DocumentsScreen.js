@@ -29,7 +29,7 @@ const DocumentsScreen = ({ navigation }) => {
     subtitle,
     status,
     icon,
-    onPress,
+    imageType,
   }) => {
     const renderBadge = () => {
       switch (status) {
@@ -77,8 +77,15 @@ const DocumentsScreen = ({ navigation }) => {
     return (
       <TouchableOpacity
         style={styles.rowCard}
-        onPress={onPress}
-        activeOpacity={0.7}
+        activeOpacity={0.8}
+        onPress={() =>
+          navigation.navigate("DocumentPreview", {
+            title,
+            subtitle,
+            status,
+            imageType,
+          })
+        }
       >
         <View style={styles.rowLeft}>
           <View style={styles.iconContainer}>
@@ -91,6 +98,7 @@ const DocumentsScreen = ({ navigation }) => {
 
           <View style={styles.textContainer}>
             <Text style={styles.rowTitle}>{title}</Text>
+
             <Text style={styles.rowSubtitle}>
               {subtitle}
             </Text>
@@ -123,7 +131,7 @@ const DocumentsScreen = ({ navigation }) => {
         style={styles.header}
       >
         <SafeAreaView>
-          {/* NAVIGATION */}
+          {/* TOP NAV */}
           <View style={styles.navRow}>
             <TouchableOpacity
               onPress={() => navigation?.goBack()}
@@ -140,7 +148,9 @@ const DocumentsScreen = ({ navigation }) => {
               Documents
             </Text>
 
-            <View style={{ width: 44 }} />
+            <TouchableOpacity style={styles.uploadAllBtn}>
+              
+            </TouchableOpacity>
           </View>
 
           {/* STATS */}
@@ -201,7 +211,7 @@ const DocumentsScreen = ({ navigation }) => {
           subtitle="Front side clear image"
           status={docStatuses.licenseFront}
           icon="card-account-details-outline"
-          onPress={() => {}}
+          imageType="licenseFront"
         />
 
         <DocumentRow
@@ -209,7 +219,7 @@ const DocumentsScreen = ({ navigation }) => {
           subtitle="Back side clear image"
           status={docStatuses.licenseBack}
           icon="card-account-details-outline"
-          onPress={() => {}}
+          imageType="licenseBack"
         />
 
         <DocumentRow
@@ -217,7 +227,7 @@ const DocumentsScreen = ({ navigation }) => {
           subtitle="Vehicle ownership registration"
           status={docStatuses.vehicleRegistration}
           icon="file-document-outline"
-          onPress={() => {}}
+          imageType="vehicleRegistration"
         />
 
         <DocumentRow
@@ -225,7 +235,7 @@ const DocumentsScreen = ({ navigation }) => {
           subtitle="Valid insurance certificate"
           status={docStatuses.insuranceCertificate}
           icon="shield-check-outline"
-          onPress={() => {}}
+          imageType="insuranceCertificate"
         />
 
         {/* VEHICLE PHOTOS */}
@@ -238,7 +248,7 @@ const DocumentsScreen = ({ navigation }) => {
           subtitle="Front side vehicle photo"
           status={docStatuses.vehicleFront}
           icon="car-outline"
-          onPress={() => {}}
+          imageType="vehicleFront"
         />
 
         <DocumentRow
@@ -246,7 +256,7 @@ const DocumentsScreen = ({ navigation }) => {
           subtitle="Rear side vehicle photo"
           status={docStatuses.vehicleBack}
           icon="car-back"
-          onPress={() => {}}
+          imageType="vehicleBack"
         />
 
         <DocumentRow
@@ -254,7 +264,7 @@ const DocumentsScreen = ({ navigation }) => {
           subtitle="Side angle vehicle photo"
           status={docStatuses.vehicleSide}
           icon="car-side"
-          onPress={() => {}}
+          imageType="vehicleSide"
         />
 
         {/* INFO BOX */}
@@ -272,6 +282,12 @@ const DocumentsScreen = ({ navigation }) => {
           </Text>
         </View>
       </ScrollView>
+
+      {/* BOTTOM SAFE AREA */}
+      <SafeAreaView
+        edges={["bottom"]}
+        style={styles.bottomSafe}
+      />
     </View>
   );
 };
@@ -285,27 +301,50 @@ const styles = StyleSheet.create({
   /* HEADER */
   header: {
     paddingHorizontal: 16,
+
     paddingTop:
       Platform.OS === "android"
-        ? (StatusBar.currentHeight || 0) + 12
+        ? (StatusBar.currentHeight || 0) + 14
         : 18,
 
-    paddingBottom: 24,
+    paddingBottom: 26,
 
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+
+    shadowColor: "#00A859",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
 
   navRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+
+    marginTop: 6,
   },
 
   backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+
+    backgroundColor: "rgba(255,255,255,0.15)",
+
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  uploadAllBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
 
     backgroundColor: "rgba(255,255,255,0.15)",
 
@@ -316,13 +355,15 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: "#FFF",
     fontSize: 20,
-    fontWeight: "800",
+    fontWeight: "900",
+    letterSpacing: 0.3,
   },
 
   /* STATS */
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
+
     marginTop: 24,
     gap: 12,
   },
@@ -332,8 +373,8 @@ const styles = StyleSheet.create({
 
     backgroundColor: "rgba(255,255,255,0.14)",
 
-    borderRadius: 18,
-    paddingVertical: 15,
+    borderRadius: 20,
+    paddingVertical: 16,
 
     alignItems: "center",
   },
@@ -342,8 +383,10 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.7)",
     fontSize: 11,
     fontWeight: "700",
+
     textTransform: "uppercase",
     letterSpacing: 0.5,
+
     marginBottom: 5,
   },
 
@@ -361,8 +404,9 @@ const styles = StyleSheet.create({
 
   sectionHeading: {
     fontSize: 17,
-    fontWeight: "800",
+    fontWeight: "900",
     color: "#0F172A",
+
     marginBottom: 14,
     marginTop: 10,
   },
@@ -371,7 +415,7 @@ const styles = StyleSheet.create({
   rowCard: {
     backgroundColor: "#FFF",
 
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 16,
 
     flexDirection: "row",
@@ -381,13 +425,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
 
     borderWidth: 1,
-    borderColor: "#F1F5F9",
-
-    elevation: 2,
+    borderColor: "#EEF2F7",
 
     shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.03,
     shadowRadius: 10,
+
+    elevation: 2,
   },
 
   rowLeft: {
@@ -397,9 +445,9 @@ const styles = StyleSheet.create({
   },
 
   iconContainer: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
+    width: 48,
+    height: 48,
+    borderRadius: 15,
 
     backgroundColor: "#F1F5F9",
 
@@ -448,7 +496,7 @@ const styles = StyleSheet.create({
   },
 
   badgePending: {
-    backgroundColor: "#FFFBEB",
+    backgroundColor: "#FEF3C7",
   },
 
   badgeNotSet: {
@@ -496,6 +544,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#64748B",
     lineHeight: 18,
+  },
+
+  bottomSafe: {
+    backgroundColor: "#000",
   },
 });
 

@@ -9,6 +9,7 @@ import ProfileSetScreen from "../screens/ProfileSetupScreen";
 import VehicleDetailsScreen from "../screens/VehicleDeatilsScreem";
 import VerificationScreen from "../screens/VerificationScreen";
 import DocumentsScreen from "../screens/Main Screen/DocumentsScreen";
+import DocumentPreviewScreen from "../screens/Main Screen/DocumentPreviewScreen";
 import BottomTabs from "./BottomTabs";
 
 const Stack = createNativeStackNavigator();
@@ -69,6 +70,13 @@ const MainNavigator = ({ isNewUser = false, setIsNewUser, setIsLoggedIn }) => {
       <Stack.Screen
         name="Documents"
         component={DocumentsScreen}
+        options={{
+          animation: "slide_from_right", // Smooth transition
+        }}
+      />
+      <Stack.Screen
+        name="DocumentPreview"
+        component={DocumentPreviewScreen}
         options={{
           animation: "slide_from_right", // Smooth transition
         }}

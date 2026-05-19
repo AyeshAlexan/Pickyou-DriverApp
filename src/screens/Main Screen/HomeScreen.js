@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -6,38 +6,48 @@ import {
   TouchableOpacity,
   Switch,
   StatusBar,
+  Platform,
 } from "react-native";
 
-import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
+import MapView, { PROVIDER_GOOGLE, Marker, AnimatedRegion } from "react-native-maps";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
 
 const HomeScreen = () => {
   const mapRef = useRef(null);
-  const insets = useSafeAreaInsets(); // ✅ FIX 1: safe area control
-
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
   const [isOnline, setIsOnline] = useState(false);
 
-  const [region, setRegion] = useState({
-    latitude: 6.9271,
-    longitude: 79.8612,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  });
+  const [region] = useState(
+    new AnimatedRegion({
+      latitude: 6.9271,
+      longitude: 79.8612,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    })
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      StatusBar.setBarStyle("dark-content", true);
+      StatusBar.setBackgroundColor("#fff", true);
+      StatusBar.setTranslucent(false);
+      StatusBar.setHidden(false);
+
+      return () => {};
+    }, [])
+  );
 
   const goToMyLocation = async () => {
     try {
-      const { status } =
-        await Location.requestForegroundPermissionsAsync();
-
+      const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") return;
 
-      const location =
-        await Location.getCurrentPositionAsync({});
+      const location = await Location.getCurrentPositionAsync({});
 
       const newRegion = {
         latitude: location.coords.latitude,
@@ -46,7 +56,7 @@ const HomeScreen = () => {
         longitudeDelta: 0.01,
       };
 
-      setRegion(newRegion);
+      region.timing(newRegion).start();
       mapRef.current?.animateToRegion(newRegion, 1000);
     } catch (error) {
       console.log(error);
@@ -55,31 +65,40 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" translucent={false} />
 
-      {/* ================= MAP ================= */}
       <MapView
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={styles.map}
-        initialRegion={region}
-        showsUserLocation
+        initialRegion={{
+          latitude: 6.9271,
+          longitude: 79.8612,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }}
+        showsUserLocation={false}
         showsMyLocationButton={false}
       >
-        <Marker coordinate={region} />
+        <Marker.Animated coordinate={region}>
+          <View style={styles.markerContainer}>
+            <View style={styles.driverIcon}>
+              <Feather name="navigation" size={20} color="#1E293B" />
+            </View>
+          </View>
+        </Marker.Animated>
       </MapView>
 
-      {/* ================= TOP ================= */}
-      <SafeAreaView edges={["top"]} style={styles.topContainer}>
+      <SafeAreaView style={[styles.topContainer, { paddingTop: insets.top }]}>
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.locationButton}>
             <Feather name="navigation" size={16} color="#00A859" />
             <Text style={styles.locationText}>Downtown Area</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.notificationButton} 
-            onPress={() => navigation.navigate("Notifications")} 
+          <TouchableOpacity
+            style={styles.notificationButton}
+            onPress={() => navigation.navigate("Notifications")}
           >
             <Feather name="bell" size={20} color="#0F172A" />
             <View style={styles.dot} />
@@ -87,17 +106,13 @@ const HomeScreen = () => {
         </View>
       </SafeAreaView>
 
-      {/* ================= RIGHT BUTTONS ================= */}
       <View
         style={[
           styles.rightButtons,
-          { bottom: 220 + insets.bottom }, // ✅ FIX 2: safe spacing
+          { bottom: 220 + insets.bottom },
         ]}
       >
-        <TouchableOpacity
-          style={styles.floatingBtn}
-          onPress={goToMyLocation}
-        >
+        <TouchableOpacity style={styles.floatingBtn} onPress={goToMyLocation}>
           <Feather name="navigation" size={20} color="#0F172A" />
         </TouchableOpacity>
 
@@ -106,13 +121,12 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {/* ================= BOTTOM CARD ================= */}
       <SafeAreaView
         edges={["bottom"]}
         style={[
           styles.bottomContainer,
           {
-            bottom: 40 + 60, // ✅ FIX 3: nav bar + gap spacing
+            bottom: Platform.OS === "android" ? 60 : 40 + insets.bottom,
           },
         ]}
       >
@@ -148,7 +162,7 @@ export default HomeScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000", // ✅ FIX 4: safe area black background fix
+    backgroundColor: "#fff",
   },
 
   map: {
@@ -167,7 +181,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 18,
-    paddingTop: 10,
+    paddingBottom: 10,
   },
 
   locationButton: {
@@ -226,7 +240,6 @@ const styles = StyleSheet.create({
   bottomContainer: {
     position: "absolute",
     width: "100%",
-
     alignItems: "center",
   },
 
@@ -252,5 +265,24 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 13,
     color: "#64748B",
+  },
+
+  markerContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  driverIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#12cd76",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
   },
 });
