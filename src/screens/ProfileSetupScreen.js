@@ -1,9 +1,11 @@
 import { Feather } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { MotiText, MotiView } from "moti";
 import React, { useState, useEffect } from "react";
 import {
   Platform,
-  ScrollView,
+
   StatusBar,
   StyleSheet,
   Text,
@@ -12,22 +14,32 @@ import {
   View,
   Modal,
   TouchableWithoutFeedback,
+  Alert,
+  ActivityIndicator,
+  Image,
 } from "react-native";
+import KeyboardAwareWrapper from "../components/KeyboardAwareWrapper";
+import ExitButton from "../components/ExitButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../services/api";
 
-const ProfileSetupScreen = ({ navigation, route }) => {
+const ProfileSetupScreen = ({ navigation, route, onExit }) => {
   const currentStep = route?.params?.step || 1;
 
   const [formData, setFormData] = useState({
-    name: "",
+
     nic: "",
     dob: "",
     address: "",
   });
 
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [dateParts, setDateParts] = useState({ day: "", month: "", year: "" });
+  const [datePickerValue, setDatePickerValue] = useState(new Date());
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [profilePicture, setProfilePicture] = useState(null);
 
   const BRAND_GREEN = "#0B1220";
   const DARK_BG = "#00A859";
@@ -36,6 +48,60 @@ const ProfileSetupScreen = ({ navigation, route }) => {
   useEffect(() => {
     loadFormData();
   }, []);
+
+  const pickProfilePicture = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        Alert.alert("Permission required", "Please allow gallery access to select a profile picture.");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.85,
+      });
+
+      if (result.canceled || !result.assets?.length) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      setProfilePicture(asset.uri);
+
+      const formData = new FormData();
+      formData.append("profile_picture", {
+        uri: asset.uri,
+        name: asset.fileName || `profile_${Date.now()}.jpg`,
+        type: asset.mimeType || "image/jpeg",
+      });
+
+      setIsUploadingPhoto(true);
+      const response = await api.post("/user/profile-picture", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (response.data?.data?.profile_picture_path) {
+        await AsyncStorage.setItem(
+          "profilePicturePath",
+          response.data.data.profile_picture_path,
+        );
+      }
+
+      Alert.alert("Success", "Profile picture updated successfully.");
+    } catch (error) {
+      console.log("Profile picture upload error:", error.response?.data || error.message);
+      Alert.alert(
+        "Upload Failed",
+        error.response?.data?.message || "Could not upload profile picture. Please try again.",
+      );
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
 
   const loadFormData = async () => {
     try {
@@ -72,11 +138,94 @@ const ProfileSetupScreen = ({ navigation, route }) => {
     return `${day}/${month}/${year}`;
   };
 
-  const handleDateSelect = (date) => {
-    setSelectedDate(date);
-    const formattedDate = formatDate(date);
+  const handleDateSelect = () => {
+    const { day, month, year } = dateParts;
+    if (!day || !month || !year) {
+      Alert.alert("Invalid Date", "Please enter a valid day, month, and year.");
+      return;
+    }
+
+    const d = parseInt(day);
+    const m = parseInt(month);
+    const y = parseInt(year);
+
+    if (d < 1 || d > 31 || m < 1 || m > 12 || y < 1900 || y > new Date().getFullYear()) {
+      Alert.alert("Invalid Date", "Please enter a valid date.");
+      return;
+    }
+
+    const formattedDate = `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
     handleInputChange("dob", formattedDate);
     setShowDatePicker(false);
+  };
+
+  const openDatePicker = () => {
+    if (formData.dob) {
+      const [d, m, y] = formData.dob.split("/");
+      const parsed = new Date(`${y}-${m}-${d}`);
+      if (!isNaN(parsed.getTime())) setDatePickerValue(parsed);
+    } else {
+      setDatePickerValue(new Date());
+    }
+    setShowDatePicker(true);
+  };
+
+  const handleContinue = async () => {
+    if ( !formData.nic || !formData.dob || !formData.address) {
+      Alert.alert("Required Fields", "Please fill in all the details before continuing.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Convert DD/MM/YYYY to YYYY-MM-DD for the backend
+      let apiDob = formData.dob;
+      if (formData.dob.includes("/")) {
+        const [d, m, y] = formData.dob.split("/");
+        apiDob = `${y}-${m}-${d}`;
+      }
+
+      const response = await api.post("/driver/complete-profile", {
+        nic: formData.nic,
+        dob: apiDob,
+        address: formData.address,
+      });
+
+      if (response.data) {
+        // Success - move to next step
+        navigation.navigate("VehicleDetails");
+      }
+    } catch (error) {
+      console.log("Profile update error:", error.response?.data || error.message);
+      Alert.alert(
+        "Update Failed",
+        error.response?.data?.message || "Something went wrong while saving your profile."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onDateChange = (event, selectedDate) => {
+    const current = selectedDate || datePickerValue;
+    if (Platform.OS === 'android') {
+      if (event?.type === 'dismissed') {
+        setShowDatePicker(false);
+        return;
+      }
+
+      setDatePickerValue(current);
+      const d = String(current.getDate()).padStart(2, '0');
+      const m = String(current.getMonth() + 1).padStart(2, '0');
+      const y = String(current.getFullYear());
+      handleInputChange('dob', `${d}/${m}/${y}`);
+      setShowDatePicker(false);
+      return;
+    }
+
+    // iOS spinner: update value but keep modal open until user taps Done
+    setDatePickerValue(current);
   };
 
   const renderSteps = () => {
@@ -115,6 +264,7 @@ const ProfileSetupScreen = ({ navigation, route }) => {
 
       {/* Header */}
       <View style={[styles.header, { backgroundColor: DARK_BG }]}>
+        <ExitButton onPress={onExit} style={styles.exitButton} />
         {/* Progress */}
         <View style={styles.progressRow}>{renderSteps()}</View>
 
@@ -138,7 +288,7 @@ const ProfileSetupScreen = ({ navigation, route }) => {
       </View>
 
       {/* Content */}
-      <ScrollView
+      <KeyboardAwareWrapper
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -150,13 +300,23 @@ const ProfileSetupScreen = ({ navigation, route }) => {
           style={styles.avatarContainer}
         >
           <View style={styles.avatarCircle}>
-            <Feather name="user" size={45} color="#CBD5E1" />
+            {profilePicture ? (
+              <Image source={{ uri: profilePicture }} style={styles.avatarImage} />
+            ) : (
+              <Feather name="user" size={45} color="#CBD5E1" />
+            )}
           </View>
 
           <TouchableOpacity
             style={[styles.cameraBtn, { backgroundColor: BRAND_GREEN }]}
+            onPress={pickProfilePicture}
+            disabled={isUploadingPhoto}
           >
-            <Feather name="camera" size={16} color="#FFF" />
+            {isUploadingPhoto ? (
+              <ActivityIndicator color="#FFF" size="small" />
+            ) : (
+              <Feather name="camera" size={16} color="#FFF" />
+            )}
           </TouchableOpacity>
         </MotiView>
 
@@ -168,7 +328,7 @@ const ProfileSetupScreen = ({ navigation, route }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 100 }}
           >
-            <Text style={styles.label}>Full Name</Text>
+            {/* <Text style={styles.label}>Full Name</Text>
 
             <View style={styles.inputWrapper}>
               <TextInput
@@ -178,7 +338,7 @@ const ProfileSetupScreen = ({ navigation, route }) => {
                 value={formData.name}
                 onChangeText={(val) => handleInputChange("name", val)}
               />
-            </View>
+            </View> */}
           </MotiView>
 
           {/* NIC */}
@@ -217,7 +377,7 @@ const ProfileSetupScreen = ({ navigation, route }) => {
 
             <TouchableOpacity
               style={styles.inputWrapper}
-              onPress={() => setShowDatePicker(true)}
+              onPress={openDatePicker}
             >
               <Feather
                 name="calendar"
@@ -272,13 +432,18 @@ const ProfileSetupScreen = ({ navigation, route }) => {
             <TouchableOpacity
               activeOpacity={0.8}
               style={[styles.continueBtn, { backgroundColor: BRAND_GREEN }]}
-              onPress={() => navigation.navigate("VehicleDetails")}
+              onPress={handleContinue}
+              disabled={isLoading}
             >
-              <Text style={styles.continueText}>Continue</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.continueText}>Continue</Text>
+              )}
             </TouchableOpacity>
           </MotiView>
         </View>
-      </ScrollView>
+      </KeyboardAwareWrapper>
 
       {/* Bottom Safe Area */}
       <SafeAreaView edges={["bottom"]} style={styles.bottomSafeArea} />
@@ -304,71 +469,14 @@ const ProfileSetupScreen = ({ navigation, route }) => {
                 </View>
 
                 <View style={styles.datePickerContent}>
-                  <View style={styles.dateInputGroup}>
-                    <Text style={styles.dateLabel}>Day</Text>
-                    <View style={styles.dateNumberInput}>
-                      <TextInput
-                        style={styles.dateInput}
-                        placeholder="DD"
-                        placeholderTextColor="#94A3B8"
-                        value={String(selectedDate.getDate()).padStart(2, "0")}
-                        onChangeText={(val) => {
-                          if (val && !isNaN(val) && val <= 31) {
-                            const newDate = new Date(selectedDate);
-                            newDate.setDate(parseInt(val));
-                            setSelectedDate(newDate);
-                          }
-                        }}
-                        maxLength={2}
-                        keyboardType="number-pad"
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.dateInputGroup}>
-                    <Text style={styles.dateLabel}>Month</Text>
-                    <View style={styles.dateNumberInput}>
-                      <TextInput
-                        style={styles.dateInput}
-                        placeholder="MM"
-                        placeholderTextColor="#94A3B8"
-                        value={String(selectedDate.getMonth() + 1).padStart(
-                          2,
-                          "0",
-                        )}
-                        onChangeText={(val) => {
-                          if (val && !isNaN(val) && val <= 12) {
-                            const newDate = new Date(selectedDate);
-                            newDate.setMonth(parseInt(val) - 1);
-                            setSelectedDate(newDate);
-                          }
-                        }}
-                        maxLength={2}
-                        keyboardType="number-pad"
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.dateInputGroup}>
-                    <Text style={styles.dateLabel}>Year</Text>
-                    <View style={styles.dateNumberInput}>
-                      <TextInput
-                        style={styles.dateInput}
-                        placeholder="YYYY"
-                        placeholderTextColor="#94A3B8"
-                        value={String(selectedDate.getFullYear())}
-                        onChangeText={(val) => {
-                          if (val && !isNaN(val) && val.length === 4) {
-                            const newDate = new Date(selectedDate);
-                            newDate.setFullYear(parseInt(val));
-                            setSelectedDate(newDate);
-                          }
-                        }}
-                        maxLength={4}
-                        keyboardType="number-pad"
-                      />
-                    </View>
-                  </View>
+                  <DateTimePicker
+                    value={datePickerValue}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    maximumDate={new Date()}
+                    onChange={onDateChange}
+                    style={{ width: '100%' }}
+                  />
                 </View>
 
                 <View style={styles.datePickerActions}>
@@ -383,11 +491,15 @@ const ProfileSetupScreen = ({ navigation, route }) => {
                       styles.datePickerBtn,
                       { backgroundColor: BRAND_GREEN },
                     ]}
-                    onPress={() => handleDateSelect(selectedDate)}
+                    onPress={() => {
+                      const d = String(datePickerValue.getDate()).padStart(2, '0');
+                      const m = String(datePickerValue.getMonth() + 1).padStart(2, '0');
+                      const y = String(datePickerValue.getFullYear());
+                      handleInputChange('dob', `${d}/${m}/${y}`);
+                      setShowDatePicker(false);
+                    }}
                   >
-                    <Text style={[styles.datePickerBtnText, { color: "#FFF" }]}>
-                      Done
-                    </Text>
+                    <Text style={[styles.datePickerBtnText, { color: "#FFF" }]}>Done</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -413,6 +525,13 @@ const styles = StyleSheet.create({
 
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
+    position: "relative",
+  },
+  exitButton: {
+    position: "absolute",
+    top: Platform.OS === "android" ? StatusBar.currentHeight + 18 : 24,
+    right: 18,
+    backgroundColor: "rgba(255,255,255,0.15)",
   },
 
   progressRow: {
@@ -485,6 +604,12 @@ const styles = StyleSheet.create({
 
     borderWidth: 1.5,
     borderColor: "#E2E8F0",
+    overflow: "hidden",
+  },
+
+  avatarImage: {
+    width: "100%",
+    height: "100%",
   },
 
   cameraBtn: {

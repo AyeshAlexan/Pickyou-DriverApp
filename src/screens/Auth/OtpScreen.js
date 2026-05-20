@@ -12,12 +12,15 @@ import {
   TouchableOpacity,
   View,
   Dimensions,
+  Alert
 } from "react-native";
+import api from "../../services/api";
 
 const { width } = Dimensions.get("window");
 
-const OTPScreen = ({ navigation, route, setIsLoggedIn, setIsNewUser }) => {
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+const OTPScreen = ({ navigation, route, setIsLoggedIn, setIsNewUser, setDriverStatus }) => {
+  // Backend returns a 4-digit OTP
+  const [otp, setOtp] = useState(["", "", "", ""]);
   const [timer, setTimer] = useState(120);
   const [isLoading, setIsLoading] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
@@ -25,13 +28,30 @@ const OTPScreen = ({ navigation, route, setIsLoggedIn, setIsNewUser }) => {
   const inputs = useRef([]);
   const BRAND_GREEN = "#00A859";
   const isRegistration = route?.params?.isRegistration ?? false;
+  const phone = route?.params?.phone ?? "";
 
+  // Automatically request OTP when screen mounts
   useEffect(() => {
+    sendOtpRequest();
+
     const interval = setInterval(() => {
       setTimer((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const sendOtpRequest = async () => {
+    if (!phone) return;
+    try {
+      // We can use 'verification' for login/registration purposes loosely based on your backend
+      const res = await api.post("/otp/send", { phone, purpose: "verification" });
+      if (res.data?.data?.otp) {
+        Alert.alert("Test Mode", `Your OTP is: ${res.data.data.otp}`);
+      }
+    } catch (err) {
+      console.log("Error sending OTP", err.response?.data || err.message);
+    }
+  };
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -44,7 +64,7 @@ const OTPScreen = ({ navigation, route, setIsLoggedIn, setIsNewUser }) => {
     newOtp[index] = text.slice(-1);
     setOtp(newOtp);
 
-    if (text.length !== 0 && index < 5) {
+    if (text.length !== 0 && index < 3) {
       inputs.current[index + 1].focus();
     }
   };
@@ -55,19 +75,33 @@ const OTPScreen = ({ navigation, route, setIsLoggedIn, setIsNewUser }) => {
     }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
+    const otpCode = otp.join("");
+    if (otpCode.length < 4) return;
+
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      await api.post("/otp/verify", {
+        phone,
+        otp_code: otpCode,
+        purpose: "verification"
+      });
+
       setIsLoading(false);
-      if (isRegistration) {
-        // For registration flow: mark as new user and log in
-        setIsNewUser?.(true);
-        setIsLoggedIn?.(true);
-      } else {
-        // For login flow: just log in
-        setIsLoggedIn?.(true);
-      }
-    }, 2500);
+      // Wait a tick for modal to clear before proceeding
+      setTimeout(() => {
+        if (isRegistration) {
+          setDriverStatus?.("pending");
+          setIsNewUser?.(true);
+          setIsLoggedIn?.(true);
+        } else {
+          setIsLoggedIn?.(true);
+        }
+      }, 300);
+    } catch (error) {
+      setIsLoading(false);
+      Alert.alert("Verification Failed", error.response?.data?.message || "Invalid OTP code.");
+    }
   };
 
   const isOtpComplete = otp.every((digit) => digit !== "");
@@ -120,9 +154,9 @@ const OTPScreen = ({ navigation, route, setIsLoggedIn, setIsNewUser }) => {
           </MotiText>
 
           <MotiText style={styles.subtitle}>
-            We sent a 6-digit code to{" "}
+            We sent a 4-digit code to{" "}
             <Text style={[styles.phoneText, { color: BRAND_GREEN }]}>
-              +94 7* *** **90
+              {phone || "+94 7* *** **90"}
             </Text>
           </MotiText>
 
@@ -170,7 +204,11 @@ const OTPScreen = ({ navigation, route, setIsLoggedIn, setIsNewUser }) => {
                 : "Didn't receive a code?"}
             </Text>
             {timer === 0 && (
-              <TouchableOpacity onPress={() => setTimer(120)}>
+              <TouchableOpacity onPress={() => {
+                setTimer(120);
+                setOtp(["", "", "", ""]);
+                sendOtpRequest();
+              }}>
                 <Text style={[styles.resendAction, { color: BRAND_GREEN }]}>
                   {" "}
                   Resend Now

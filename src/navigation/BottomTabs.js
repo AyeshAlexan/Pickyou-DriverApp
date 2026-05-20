@@ -3,10 +3,10 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { BlurView } from "expo-blur";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import Animated, {
-    FadeIn,
-    FadeOut,
-    useAnimatedStyle,
-    withSpring,
+  FadeIn,
+  FadeOut,
+  useAnimatedStyle,
+  withSpring,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -99,7 +99,10 @@ const CustomTabBar = ({ state, navigation }) => {
                 />
               )}
 
-              <AnimatedTabIcon focused={focused} iconName={iconName} />
+              <AnimatedTabIcon
+                focused={focused}
+                iconName={iconName}
+              />
             </TouchableOpacity>
           );
         })}
@@ -111,9 +114,12 @@ const CustomTabBar = ({ state, navigation }) => {
 /* =========================
    NAVIGATION
 ========================= */
-const BottomTabs = ({ setIsLoggedIn }) => {
+const BottomTabs = ({ setIsLoggedIn, setIsNewUser, setDriverStatus }) => {
   return (
-    <SafeAreaView edges={["bottom"]} style={styles.safeAreaContainer}>
+    <SafeAreaView
+      edges={["bottom"]}
+      style={styles.safeAreaContainer}
+    >
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
@@ -128,20 +134,29 @@ const BottomTabs = ({ setIsLoggedIn }) => {
         }}
         tabBar={(props) => <CustomTabBar {...props} />}
       >
-        <Tab.Screen name="Home" component={HomeScreen} />
-
-        <Tab.Screen name="Earnings" component={EarningsScreen} />
-
-        <Tab.Screen name="Activity" component={ActivityScreen} />
+        <Tab.Screen
+          name="Home"
+          component={HomeScreen}
+        />
 
         <Tab.Screen
-          name="Profile"
-          options={{
-            headerShown: false,
-          }}
-        >
+          name="Earnings"
+          component={EarningsScreen}
+        />
+
+        <Tab.Screen
+          name="Activity"
+          component={ActivityScreen}
+        />
+
+        <Tab.Screen name="Profile">
           {(props) => (
-            <ProfileScreen {...props} setIsLoggedIn={setIsLoggedIn} />
+            <ProfileScreen
+              {...props}
+              setIsLoggedIn={setIsLoggedIn}
+              setIsNewUser={setIsNewUser}
+              setDriverStatus={setDriverStatus}
+            />
           )}
         </Tab.Screen>
       </Tab.Navigator>

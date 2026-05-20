@@ -7,7 +7,14 @@ import RegisterScreen from "../screens/Auth/RegisterScreen";
 
 const Stack = createNativeStackNavigator();
 
-const AuthNavigator = ({ setIsLoggedIn, setIsNewUser }) => {
+const AuthNavigator = ({ setIsLoggedIn, setIsNewUser, setDriverStatus, setDriver }) => {
+  const handleExitToGetStarted = (navigation) => {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "GetStarted" }],
+    });
+  };
+
   return (
     <Stack.Navigator
       initialRouteName="GetStarted"
@@ -18,10 +25,26 @@ const AuthNavigator = ({ setIsLoggedIn, setIsNewUser }) => {
       <Stack.Screen name="GetStarted" component={GetStartedScreen} />
 
       <Stack.Screen name="Login">
-        {(props) => <LoginScreen {...props} setIsLoggedIn={setIsLoggedIn} />}
+        {(props) => (
+          <LoginScreen
+            {...props}
+            setIsLoggedIn={setIsLoggedIn}
+            setIsNewUser={setIsNewUser}
+            setDriverStatus={setDriverStatus}
+            setDriver={setDriver}
+            onExit={() => handleExitToGetStarted(props.navigation)}
+          />
+        )}
       </Stack.Screen>
 
-      <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="Register">
+        {(props) => (
+          <RegisterScreen
+            {...props}
+            onExit={() => handleExitToGetStarted(props.navigation)}
+          />
+        )}
+      </Stack.Screen>
 
       <Stack.Screen name="OTP">
         {(props) => (
@@ -29,6 +52,8 @@ const AuthNavigator = ({ setIsLoggedIn, setIsNewUser }) => {
             {...props}
             setIsLoggedIn={setIsLoggedIn}
             setIsNewUser={setIsNewUser}
+            setDriverStatus={setDriverStatus}
+            onExit={() => handleExitToGetStarted(props.navigation)}
           />
         )}
       </Stack.Screen>

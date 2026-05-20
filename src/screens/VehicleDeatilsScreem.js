@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   Platform,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -10,13 +9,17 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import KeyboardAwareWrapper from "../components/KeyboardAwareWrapper";
+import ExitButton from "../components/ExitButton";
 
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AnimatePresence, MotiText, MotiView } from "moti";
 import { SafeAreaView } from "react-native-safe-area-context";
+import api from "../services/api";
+import { Alert } from "react-native";
 
-const VehicleDetailsScreen = ({ navigation }) => {
+const VehicleDetailsScreen = ({ navigation, onExit }) => {
   const [vehicleType, setVehicleType] = useState("Car");
   const [showVehicleModal, setShowVehicleModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,6 +39,7 @@ const VehicleDetailsScreen = ({ navigation }) => {
     year: "",
     color: "",
     plate: "",
+    seat_capacity: "",
   });
 
   const BRAND_GREEN = "#0B1220";
@@ -71,12 +75,40 @@ const VehicleDetailsScreen = ({ navigation }) => {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    if (!formData.make || !formData.model || !formData.year || !formData.color || !formData.plate || !formData.seat_capacity) {
+      Alert.alert("Required Fields", "Please fill in all vehicle details including seat capacity.");
+      return;
+    }
+
     setIsSubmitting(true);
-    setTimeout(() => {
-      navigation.navigate("Documents");
-      setTimeout(() => setIsSubmitting(false), 500);
-    }, 600);
+    try {
+      // We save to AsyncStorage first as DocumentVerifyScreen might need it
+      await saveVehicleData();
+
+      // Optionally call API to persist step
+      const response = await api.post("/driver/complete-profile", {
+        make: formData.make,
+        model: formData.model,
+        year: formData.year,
+        color: formData.color,
+        plate: formData.plate,
+        vehicleType: vehicleType,
+        seat_capacity: formData.seat_capacity,
+      });
+
+      if (response.data) {
+        navigation.navigate("Documentscreen");
+      }
+    } catch (error) {
+      console.log("Vehicle update error:", error.response?.data || error.message);
+      Alert.alert(
+        "Update Failed",
+        error.response?.data?.message || "Something went wrong while saving vehicle details."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderSteps = () => {
@@ -185,7 +217,7 @@ const VehicleDetailsScreen = ({ navigation }) => {
             <Feather name="arrow-left" size={22} color="#FFF" />
           </TouchableOpacity>
           <View style={styles.progressRow}>{renderSteps()}</View>
-          <View style={styles.headerSpacer} />
+          <ExitButton onPress={onExit} style={styles.exitButton} />
         </View>
 
         <View style={styles.headerTitleContainer}>
@@ -200,7 +232,7 @@ const VehicleDetailsScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <ScrollView
+      <KeyboardAwareWrapper
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -284,23 +316,33 @@ const VehicleDetailsScreen = ({ navigation }) => {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>License Plate Number</Text>
-          <View style={styles.inputWrapper}>
-            <MaterialCommunityIcons
-              name="pound"
-              size={18}
-              color="#94A3B8"
-              style={{ marginRight: 10 }}
-            />
-            <TextInput
-              placeholder="ABC-1234"
-              placeholderTextColor="#94A3B8"
-              style={styles.input}
-              autoCapitalize="characters"
-              value={formData.plate}
-              onChangeText={(val) => setFormData({ ...formData, plate: val })}
-            />
+        <View style={styles.row}>
+          <View style={styles.half}>
+            <Text style={styles.label}>License Plate</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                placeholder="ABC-1234"
+                placeholderTextColor="#94A3B8"
+                style={styles.input}
+                autoCapitalize="characters"
+                value={formData.plate}
+                onChangeText={(val) => setFormData({ ...formData, plate: val })}
+              />
+            </View>
+          </View>
+
+          <View style={styles.half}>
+            <Text style={styles.label}>Seat Capacity</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                placeholder="4"
+                placeholderTextColor="#94A3B8"
+                style={styles.input}
+                keyboardType="number-pad"
+                value={formData.seat_capacity}
+                onChangeText={(val) => setFormData({ ...formData, seat_capacity: val })}
+              />
+            </View>
           </View>
         </View>
 
@@ -325,7 +367,7 @@ const VehicleDetailsScreen = ({ navigation }) => {
         <TouchableOpacity
           activeOpacity={0.8}
           style={[styles.continueBtn, { backgroundColor: BRAND_GREEN }]}
-          onPress={() => navigation.navigate("Documentscreen")}
+          onPress={handleContinue}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -340,7 +382,7 @@ const VehicleDetailsScreen = ({ navigation }) => {
             <Text style={styles.continueText}>Continue</Text>
           )}
         </TouchableOpacity>
-      </ScrollView>
+      </KeyboardAwareWrapper>
 
       <SafeAreaView edges={["bottom"]} style={styles.bottomSafe} />
     </View>
@@ -370,6 +412,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.2)",
     justifyContent: "center",
     alignItems: "center",
+  },
+  exitButton: {
+    backgroundColor: "rgba(255,255,255,0.2)",
   },
   progressRow: {
     flexDirection: "row",

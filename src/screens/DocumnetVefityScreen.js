@@ -10,17 +10,22 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
+import ExitButton from "../components/ExitButton";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../services/api";
 
-const DocumentVerifyScreen = ({ navigation }) => {
+const DocumentVerifyScreen = ({ navigation, onExit, setDriverStatus }) => {
   const [uploads, setUploads] = useState({
-    license: false,
-    registration: false,
-    insurance: false,
-    front: false,
-    back: false,
-    interior: false,
+    license_front: null,
+    license_back: null,
+    registration: null,
+    insurance: null,
+    front: null,
+    back: null,
+    interior: null,
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -39,7 +44,7 @@ const DocumentVerifyScreen = ({ navigation }) => {
         result.type === "success" ||
         (result.assets && result.assets.length > 0)
       ) {
-        setUploads((prev) => ({ ...prev, [docKey]: true }));
+        setUploads((prev) => ({ ...prev, [docKey]: result.assets ? result.assets[0] : result }));
       }
     } catch (err) {
       console.log("Upload error:", err);
@@ -47,12 +52,74 @@ const DocumentVerifyScreen = ({ navigation }) => {
   };
 
   const allDocsUploaded = Object.values(uploads).every(
-    (status) => status === true,
+    (status) => status !== null,
   );
 
-  const handleSubmit = () => {
-    if (allDocsUploaded) {
-      setIsSubmitted(true);
+  const handleSubmit = async () => {
+    if (!allDocsUploaded) return;
+    setIsSubmitted(true);
+
+    try {
+      const profileStr = await AsyncStorage.getItem("profileFormData");
+      const vehicleStr = await AsyncStorage.getItem("vehicleFormData");
+
+      const profile = profileStr ? JSON.parse(profileStr) : {};
+      const vehicle = vehicleStr ? JSON.parse(vehicleStr) : {};
+
+      const formData = new FormData();
+
+      if (profile.dob) {
+        if (profile.dob.includes("/")) {
+          const [d, m, y] = profile.dob.split("/");
+          formData.append("dob", `${y}-${m}-${d}`);
+        } else {
+          formData.append("dob", profile.dob);
+        }
+      }
+      if (profile.address) formData.append("address", profile.address);
+      if (profile.nic) formData.append("nic", profile.nic);
+
+      if (vehicle.formData?.make) formData.append("make", vehicle.formData.make);
+      if (vehicle.formData?.model) formData.append("model", vehicle.formData.model);
+      if (vehicle.formData?.year) formData.append("year", vehicle.formData.year);
+      if (vehicle.formData?.color) formData.append("color", vehicle.formData.color);
+      if (vehicle.formData?.plate) formData.append("plate", vehicle.formData.plate);
+      if (vehicle.formData?.seat_capacity) formData.append("seat_capacity", vehicle.formData.seat_capacity);
+      if (vehicle.vehicleType) formData.append("vehicleType", vehicle.vehicleType);
+
+      Object.keys(uploads).forEach((key) => {
+        if (uploads[key]) {
+          formData.append(key, {
+            uri: uploads[key].uri,
+            name: uploads[key].name || `${key}.jpg`,
+            type: uploads[key].mimeType || "image/jpeg",
+          });
+        }
+      });
+
+      await api.post('/driver/complete-profile', formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+
+      // Update global context status so app instantly reflects 'pending'
+      if (setDriverStatus) {
+        setDriverStatus("pending");
+      }
+
+      // After a successful upload/re-upload, update the local status directly to pending so the Verification screen adapts properly
+      if (navigation.getState?.().routes[0]?.name === "Verification") {
+        navigation.goBack(); // Return to Verification Screen directly instead of resetting if we just came from it
+      } else {
+        // Reset stack to Verification for onboarding flow
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Verification" }],
+        });
+      }
+    } catch (error) {
+      console.error("Submit error:", error);
+      Alert.alert("Error", "Could not submit your profile. Please try again.");
+      setIsSubmitted(false);
     }
   };
 
@@ -148,7 +215,7 @@ const DocumentVerifyScreen = ({ navigation }) => {
             <Feather name="arrow-left" size={22} color="#FFF" />
           </TouchableOpacity>
           <View style={styles.progressRow}>{renderSteps()}</View>
-          <View style={{ width: 40 }} /> {/* Spacer for centering steps */}
+          <ExitButton onPress={onExit} style={styles.exitButton} />
         </View>
 
         <MotiText
@@ -171,20 +238,27 @@ const DocumentVerifyScreen = ({ navigation }) => {
 
         <DocumentCard
           index={0}
-          title="Driving License"
-          subtitle="Front & back view (JPEG, PNG)"
+          title="Driving License Front"
+          subtitle="Front side of your license (JPEG, PNG)"
           icon="card-account-details-outline"
-          docKey="license"
+          docKey="license_front"
         />
         <DocumentCard
           index={1}
+          title="Driving License Back"
+          subtitle="Back side of your license (JPEG, PNG)"
+          icon="card-account-details-outline"
+          docKey="license_back"
+        />
+        <DocumentCard
+          index={2}
           title="Vehicle Registration"
           subtitle="Latest logbook copy (PDF/JPEG)"
           icon="car-info"
           docKey="registration"
         />
         <DocumentCard
-          index={2}
+          index={3}
           title="Insurance Certificate"
           subtitle="Valid up-to-date policy (PDF/JPEG)"
           icon="file-certificate-outline"
@@ -196,22 +270,22 @@ const DocumentVerifyScreen = ({ navigation }) => {
         </Text>
 
         <DocumentCard
-          index={3}
+          index={4}
           title="Front View"
           subtitle="Clear view including plate"
           icon="car-convertible"
           docKey="front"
         />
         <DocumentCard
-          index={4}
+          index={5}
           title="Back View"
           subtitle="Including plate and model"
           icon="car-back"
           docKey="back"
         />
         <DocumentCard
-          index={5}
-          title="Interior View"
+          index={6}
+          title="Side View"
           subtitle="Dashboard and seating condition"
           icon="car-seat"
           docKey="interior"
@@ -223,7 +297,7 @@ const DocumentVerifyScreen = ({ navigation }) => {
             allDocsUploaded && !isSubmitted && { backgroundColor: DARK_BG },
             isSubmitted && { backgroundColor: "#F1F5F9" },
           ]}
-          onPress={() => navigation.navigate("Verification")}
+          onPress={handleSubmit}
           disabled={!allDocsUploaded || isSubmitted}
         >
           {isSubmitted ? (
@@ -278,6 +352,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.2)",
     justifyContent: "center",
     alignItems: "center",
+  },
+  exitButton: {
+    backgroundColor: "rgba(255,255,255,0.2)",
   },
   progressRow: {
     flexDirection: "row",

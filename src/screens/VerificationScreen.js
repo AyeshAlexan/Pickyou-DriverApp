@@ -10,8 +10,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../services/api";
+import createEchoInstance from "../services/echo";
 
-const VerificationStatusScreen = ({ navigation }) => {
+const VerificationStatusScreen = ({ navigation, setIsLoggedIn, setDriverStatus, setIsNewUser }) => {
   /* =========================
      BRAND COLORS
   ========================= */
@@ -23,49 +26,97 @@ const VerificationStatusScreen = ({ navigation }) => {
   /* =========================
      TEMP STATUS
      later this comes from backend
-     
+
      possible values:
      pending
      approved
      rejected
   ========================= */
   const [verificationStatus, setVerificationStatus] = useState("pending");
-
   const [loading, setLoading] = useState(true);
 
-  /* =========================
-     SIMULATE BACKEND CALL
-     REMOVE THIS LATER
-  ========================= */
   useEffect(() => {
-    setTimeout(() => {
-      // CHANGE THIS TO TEST
-      // pending
-      // approved
-      // rejected
-
-      setVerificationStatus("pending");
-
-      setLoading(false);
-    }, 1500);
+    fetchStatus();
+    setupEcho();
   }, []);
 
+  const setupEcho = async () => {
+    try {
+      console.log("Initializing Echo connection...");
+      const echo = await createEchoInstance();
+      console.log("Echo instance created successfully");
+
+      const response = await api.get("/user");
+      const currentDriverId = response.data?.driver?.id;
+
+      if (!currentDriverId) {
+        console.log("No driver ID found");
+        return;
+      }
+
+      console.log("Subscribing to admin.dashboard channel for driver:", currentDriverId);
+
+      echo.channel("admin.dashboard")
+        .listen(".DashboardUpdated", (e) => {
+          console.log("Real-time update received:", e);
+          if (e.event === "driver.status" && e.data.driver_id === currentDriverId) {
+            const newStatus = e.data.status?.toLowerCase();
+            if (newStatus === "approved") {
+              setVerificationStatus("approved");
+            } else if (newStatus === "rejected") {
+              setVerificationStatus("rejected");
+            }
+          }
+        });
+
+      return () => {
+        echo.leaveChannel("admin.dashboard");
+      };
+    } catch (error) {
+      console.error("Echo setup error:", error.message || error);
+      console.error("Error details:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem("userToken");
+      await AsyncStorage.removeItem("profileFormData");
+      await AsyncStorage.removeItem("vehicleFormData");
+      setDriverStatus?.(null);
+      setIsNewUser?.(false);
+      setIsLoggedIn(false);
+    } catch (error) {
+      console.log("Logout error:", error);
+    }
+  };
+
+  const fetchStatus = async () => {
+    try {
+      const response = await api.get("/user");
+      const driver = response.data?.driver;
+      if (driver) {
+        setVerificationStatus(driver.status?.toLowerCase() || "pending");
+      }
+    } catch (error) {
+      console.log("Error fetching driver status:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   /* =========================
-     AUTO NAVIGATE WHEN APPROVED
+     STATE EFFECTS
   ========================= */
   useEffect(() => {
-    if (verificationStatus === "approved") {
-      const timer = setTimeout(() => {
-        navigation.replace("MainTabs");
-      }, 2500);
-
-      return () => clearTimeout(timer);
-    }
+    // Other effects can go here if needed
   }, [verificationStatus]);
 
   /* =========================
      STATUS CONFIG
   ========================= */
+  const currentStatus = verificationStatus?.toLowerCase() || "pending";
+
   const statusConfig = {
     pending: {
       title: "Verification in Progress",
@@ -75,16 +126,34 @@ const VerificationStatusScreen = ({ navigation }) => {
       color: BRAND_YELLOW,
       buttonText: "Waiting For Approval",
       buttonDisabled: true,
+      docStatus: "In Review",
+      docIsComplete: false,
+      docIsRejected: false,
+      nextStepIcon: "information-outline",
+      nextStepTitle: "What's Next?",
+      nextStepText: "You will receive an email notification once your documents have been verified and your account is approved. This usually takes 24-48 hours.",
+      nextStepBoxBorder: "rgba(255,255,255,0.08)",
+      nextStepBoxBg: "rgba(255,255,255,0.05)",
+      nextStepTitleColor: "#FFF"
     },
 
     approved: {
       title: "Account Approved",
       subtitle:
-        "Your documents have been verified successfully. Redirecting to app...",
+        "Your documents have been verified successfully. You can now use the app.",
       icon: "check-circle",
       color: BRAND_GREEN,
-      buttonText: "Opening App...",
-      buttonDisabled: true,
+      buttonText: "Open App",
+      buttonDisabled: false,
+      docStatus: "Approved",
+      docIsComplete: true,
+      docIsRejected: false,
+      nextStepIcon: "check-circle",
+      nextStepTitle: "Account Active!",
+      nextStepText: "Your account is now fully verified and active. You're ready to start receiving ride requests. Get ready to drive!",
+      nextStepBoxBorder: "rgba(0,168,89,0.3)",
+      nextStepBoxBg: "rgba(0,168,89,0.08)",
+      nextStepTitleColor: BRAND_GREEN
     },
 
     rejected: {
@@ -95,10 +164,19 @@ const VerificationStatusScreen = ({ navigation }) => {
       color: BRAND_RED,
       buttonText: "Upload Again",
       buttonDisabled: false,
+      docStatus: "Rejected",
+      docIsComplete: false,
+      docIsRejected: true,
+      nextStepIcon: "alert-circle",
+      nextStepTitle: "Action Required",
+      nextStepText: "Some of your documents did not meet our requirements. Please review and re-upload clear, valid documents to resubmit your application.",
+      nextStepBoxBorder: "rgba(239,68,68,0.3)",
+      nextStepBoxBg: "rgba(239,68,68,0.08)",
+      nextStepTitleColor: BRAND_RED
     },
   };
 
-  const current = statusConfig[verificationStatus];
+  const current = statusConfig[currentStatus] || statusConfig.pending;
 
   /* =========================
      STATUS ITEM COMPONENT
@@ -147,24 +225,16 @@ const VerificationStatusScreen = ({ navigation }) => {
             }
           />
         </View>
-
         <Text style={styles.statusTitle}>{title}</Text>
       </View>
-
       <Text
         style={[
           styles.statusLabel,
           {
-            color: isRejected
-              ? BRAND_RED
-              : isComplete
-                ? "#94A3B8"
-                : BRAND_YELLOW,
+            color: isRejected ? BRAND_RED : isComplete ? "#94A3B8" : BRAND_YELLOW,
           },
         ]}
-      >
-        {status}
-      </Text>
+      >{status}</Text>
     </MotiView>
   );
 
@@ -191,6 +261,17 @@ const VerificationStatusScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
 
+      {/* HEADER WITH LOGOUT */}
+      <View style={styles.topBar}>
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={handleLogout}
+        >
+          <Feather name="log-out" size={18} color="#FFF" />
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.content}>
         {/* TOP ICON */}
         <View style={styles.iconContainer}>
@@ -207,9 +288,9 @@ const VerificationStatusScreen = ({ navigation }) => {
               styles.pulseRing,
               {
                 backgroundColor:
-                  verificationStatus === "approved"
+                  currentStatus === "approved"
                     ? "rgba(0,168,89,0.12)"
-                    : verificationStatus === "rejected"
+                    : currentStatus === "rejected"
                       ? "rgba(239,68,68,0.12)"
                       : "rgba(253,224,71,0.12)",
               },
@@ -242,11 +323,9 @@ const VerificationStatusScreen = ({ navigation }) => {
         </MotiText>
 
         {/* SUBTITLE */}
-        <Text style={styles.headerSubtitle}>
-          {current.subtitle}
-        </Text>
+        <Text style={styles.headerSubtitle}>{current.subtitle}</Text>
 
-        {/* STATUS LIST */}
+        {/* STATUS-SPECIFIC CONTENT */}
         <View style={styles.statusList}>
           <StatusItem
             index={0}
@@ -265,47 +344,40 @@ const VerificationStatusScreen = ({ navigation }) => {
           <StatusItem
             index={2}
             title="Document Verification"
-            status={
-              verificationStatus === "approved"
-                ? "Approved"
-                : verificationStatus === "rejected"
-                  ? "Rejected"
-                  : "In Review"
-            }
-            isComplete={verificationStatus === "approved"}
-            isRejected={verificationStatus === "rejected"}
+            status={current.docStatus}
+            isComplete={current.docIsComplete}
+            isRejected={current.docIsRejected}
           />
         </View>
 
         {/* INFO BOX */}
         <MotiView
+          key={currentStatus}
           from={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 700 }}
-          style={styles.nextStepBox}
+          style={[
+            styles.nextStepBox,
+            {
+              borderColor: current.nextStepBoxBorder,
+              backgroundColor: current.nextStepBoxBg,
+            },
+          ]}
         >
           <View style={styles.nextStepHeader}>
             <MaterialCommunityIcons
-              name="information-outline"
+              name={current.nextStepIcon}
               size={20}
-              color="#FFF"
+              color={current.nextStepTitleColor}
             />
 
-            <Text style={styles.nextStepTitle}>
-              {verificationStatus === "approved"
-                ? "Welcome!"
-                : verificationStatus === "rejected"
-                  ? "Action Required"
-                  : "Whats Next?"}
+            <Text style={[styles.nextStepTitle, { color: current.nextStepTitleColor }]}>
+              {current.nextStepTitle}
             </Text>
           </View>
 
           <Text style={styles.nextStepText}>
-            {verificationStatus === "approved"
-              ? "Your account is now active and ready to receive rides."
-              : verificationStatus === "rejected"
-                ? "Please upload clear and valid documents to continue."
-                : "You will receive an email once your account is approved."}
+            {current.nextStepText}
           </Text>
         </MotiView>
       </View>
@@ -321,9 +393,16 @@ const VerificationStatusScreen = ({ navigation }) => {
             opacity: current.buttonDisabled ? 0.7 : 1,
           },
         ]}
-        onPress={() => {
+        onPress={async () => {
           if (verificationStatus === "rejected") {
+            // Set driver status to "rejected" so that they start re-uploading documents.
+            setDriverStatus?.("rejected");
             navigation.navigate("Documentscreen");
+          } else if (verificationStatus === "approved") {
+            await AsyncStorage.setItem("hasSeenApproved", "true");
+            setDriverStatus?.("approved");
+            setIsNewUser?.(false);
+            navigation.replace("MainTabs");
           }
         }}
       >
@@ -356,7 +435,33 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 25,
     alignItems: "center",
-    paddingTop: 40,
+    paddingTop: 10,
+  },
+
+  topBar: {
+    width: "100%",
+    paddingHorizontal: 25,
+    paddingTop: 10,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+
+  logoutBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(239, 68, 68, 0.3)",
+  },
+
+  logoutText: {
+    color: "#EF4444",
+    fontSize: 13,
+    fontWeight: "700",
+    marginLeft: 8,
   },
 
   loaderContainer: {
