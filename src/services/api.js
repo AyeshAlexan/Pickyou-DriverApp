@@ -23,4 +23,16 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Response Interceptor to handle global API responses and clean up invalid states
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response && error.response.status === 401) {
+      console.log('Token is invalid or expired. Cleaning up storage...');
+      await AsyncStorage.removeItem('userToken');
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
