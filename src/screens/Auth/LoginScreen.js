@@ -65,14 +65,22 @@ const LoginScreen = ({
 
         const userResponse = await api.get("/user");
         const driverData = userResponse.data?.driver;
-        const status = (driverData?.status || "pending").toLowerCase();
+        let status = (driverData?.status || "pending").toLowerCase();
+
+        if (status === "approved" && driverData) {
+          const hasSeenKey = `hasSeenApproved_${driverData.id}`;
+          const hasSeenApproved = await AsyncStorage.getItem(hasSeenKey);
+          if (!hasSeenApproved) {
+            status = "show_approved_screen";
+          }
+        }
 
         setDriverStatus?.(status);
         setDriver?.(driverData || null);
 
         // Profile completeness gate definition logic
         const isProfileComplete = !!driverData?.address;
-        if (status !== "approved" && !isProfileComplete) {
+        if (status !== "approved" && status !== "show_approved_screen" && !isProfileComplete) {
           setIsNewUser?.(true);
         } else {
           setIsNewUser?.(false);
@@ -89,7 +97,7 @@ const LoginScreen = ({
       Alert.alert(
         "Login Failed",
         error.response?.data?.message ||
-          "Invalid credentials. Please try again."
+        "Invalid credentials. Please try again."
       );
     }
   };
@@ -337,7 +345,7 @@ const LoginScreen = ({
                       Dont have an account?
                     </Text>
                     <TouchableOpacity
-                      onPress={() => navigation?.navigate("MainTabs")}
+                      onPress={() => navigation?.navigate("Register")}
                     >
                       <Text style={styles.signUpText}> Sign Up</Text>
                     </TouchableOpacity>

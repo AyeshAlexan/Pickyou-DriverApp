@@ -13,20 +13,19 @@ import {
   ActivityIndicator,
   Modal,
 } from "react-native";
-
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { MotiView, MotiText } from "moti";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// CUSTOMS
+// Customs imported from your friend's architecture
 import KeyboardAwareWrapper from "../../components/KeyboardAwareWrapper";
 import api from "../../services/api";
 
 const { width, height } = Dimensions.get("window");
 
 const RegisterScreen = ({ navigation }) => {
-  // FORM STATES
+  // Form State Configurations
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -34,45 +33,90 @@ const RegisterScreen = ({ navigation }) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // VALIDATION STATES
+  // Validation States
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
-  // UI STATES
+  // Interactive UI States
   const [showPassword, setShowPassword] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [agree, setAgree] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // CUSTOM MODERN POPUP
+  // Custom popup state
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupTitle, setPopupTitle] = useState("");
   const [popupMessage, setPopupMessage] = useState("");
   const [popupType, setPopupType] = useState("error");
+  const [popupButtonText, setPopupButtonText] = useState("OK");
+  const [popupAction, setPopupAction] = useState(null);
 
   const BRAND_GREEN = "#00A859";
 
-  // MODERN POPUP FUNCTION
   const showPopup = (
     title,
     message,
-    type = "error"
+    type = "error",
+    action = null,
+    buttonText = "OK"
   ) => {
     setPopupTitle(title);
     setPopupMessage(message);
     setPopupType(type);
+    setPopupAction(() => action);
+    setPopupButtonText(buttonText);
     setPopupVisible(true);
   };
 
-  // ADD EMAIL VALIDATION FUNCTION
-  const validateEmail = (email) => {
-    return /\S+@\S+\.\S+/.test(email);
+  const validateEmail = (value) => {
+    return /\S+@\S+\.\S+/.test(value);
   };
 
-  // REGISTER FUNCTION
+  const handleEmailChange = (value) => {
+    setEmail(value);
+
+    if (!value) {
+      setEmailError("");
+      return;
+    }
+
+    setEmailError(validateEmail(value) ? "" : "Please enter a valid email address");
+  };
+
+  const handlePasswordChange = (value) => {
+    setPassword(value);
+
+    if (!value) {
+      setPasswordError("");
+    } else if (value.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+    } else {
+      setPasswordError("");
+    }
+
+    if (confirmPassword) {
+      setConfirmPasswordError(
+        value === confirmPassword ? "" : "Passwords do not match"
+      );
+    }
+  };
+
+  const handleConfirmPasswordChange = (value) => {
+    setConfirmPassword(value);
+
+    if (!value) {
+      setConfirmPasswordError("");
+      return;
+    }
+
+    setConfirmPasswordError(
+      value === password ? "" : "Passwords do not match"
+    );
+  };
+
+  // Backend Registration Pipeline Logic
   const handleRegister = async () => {
-    // RESET ERRORS
     setEmailError("");
     setPasswordError("");
     setConfirmPasswordError("");
@@ -82,53 +126,35 @@ const RegisterScreen = ({ navigation }) => {
     if (!agree) {
       showPopup(
         "Terms Required",
-        "Please agree to the Terms of Service.",
+        "Please agree to the Terms of Service to continue.",
         "warning"
       );
       return;
     }
 
-    if (
-      !firstName ||
-      !lastName ||
-      !email ||
-      !phone ||
-      !password ||
-      !confirmPassword
-    ) {
-      showPopup(
-        "Missing Fields",
-        "Please fill all required fields.",
-        "error"
-      );
+    if (!firstName || !lastName || !email || !phone || !password || !confirmPassword) {
+      showPopup("Error", "Please fill in all fields.", "error");
       return;
     }
 
-    // EMAIL VALIDATION
     if (!validateEmail(email)) {
-      setEmailError(
-        "Please enter a valid email address"
-      );
+      setEmailError("Please enter a valid email address");
       hasError = true;
     }
 
-    // PASSWORD VALIDATION
     if (password.length < 6) {
-      setPasswordError(
-        "Password must be at least 6 characters"
-      );
+      setPasswordError("Password must be at least 6 characters");
       hasError = true;
     }
 
-    // CONFIRM PASSWORD VALIDATION
     if (password !== confirmPassword) {
-      setConfirmPasswordError(
-        "Passwords do not match"
-      );
+      setConfirmPasswordError("Passwords do not match");
       hasError = true;
     }
 
-    if (hasError) return;
+    if (hasError) {
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -140,50 +166,49 @@ const RegisterScreen = ({ navigation }) => {
         phone,
         password,
         password_confirmation: confirmPassword,
-        role: "driver",
+        role: "driver"
       });
 
       if (response.data?.data?.token) {
-        await AsyncStorage.setItem(
-          "userToken",
-          response.data.data.token
-        );
-
+        await AsyncStorage.setItem("userToken", response.data.data.token);
         navigation?.navigate("OTP", {
           isRegistration: true,
-          phone: phone,
+          email,
+          phone,
         });
       }
     } catch (error) {
-      console.log(
-        "Registration error:",
-        error.response?.data || error.message
-      );
-
+      console.log("Registration error:", error.response?.data || error.message);
       const resp = error.response?.data;
+      const msg = resp?.message || "An error occurred during registration.";
 
-      const msg =
-        resp?.message ||
-        "An error occurred during registration.";
+      const emailError = resp?.errors?.email || /email|already/i.test(msg);
 
-      const phoneError =
-        resp?.errors?.phone ||
-        /phone|already/i.test(msg);
-
-      if (phoneError) {
+      if (emailError) {
         showPopup(
-          "Already Registered",
-          "Your mobile number is already registered. Please login to continue.",
-          "warning"
+          "Email Already Registered",
+          "This email is already registered. Please log in to continue.",
+          "warning",
+          () => navigation.navigate("Login", { email }),
+          "Login"
         );
         return;
       }
 
-      showPopup(
-        "Registration Failed",
-        msg,
-        "error"
-      );
+      // Check if phone or user instance is already present in the database setup
+      const phoneError = resp?.errors?.phone || /phone|already/i.test(msg);
+      if (phoneError) {
+        showPopup(
+          "Number Already Registered",
+          "Your mobile number is already registered. Please log in to continue.",
+          "warning",
+          () => navigation.navigate("Login", { phone }),
+          "Login"
+        );
+        return;
+      }
+
+      showPopup("Registration Failed", msg, "error");
     } finally {
       setIsLoading(false);
     }
@@ -197,73 +222,51 @@ const RegisterScreen = ({ navigation }) => {
         translucent
       />
 
-      {/* TOP GREEN BLOB */}
+      {/* TOP BACKGROUND GEOMETRIC GRAPHIC BLOB */}
       <MotiView
-        from={{
-          opacity: 0,
-          scale: 0.5,
-          rotate: "0deg",
-        }}
-        animate={{
-          opacity: 1,
-          scale: 1,
-          rotate: "-15deg",
-        }}
-        transition={{
-          type: "timing",
-          duration: 2000,
-        }}
+        from={{ opacity: 0, scale: 0.5, rotate: "0deg" }}
+        animate={{ opacity: 1, scale: 1, rotate: "-15deg" }}
+        transition={{ type: "timing", duration: 2000 }}
         style={[
           styles.graphicBlob,
           {
-            top: -120,
-            left: -60,
-            backgroundColor:
-              "rgba(0, 168, 89, 0.12)",
+            top: -100,
+            left: -50,
+            backgroundColor: "rgba(0, 168, 89, 0.12)",
             width: 350,
             height: 350,
           },
         ]}
       />
 
-      {/* BOTTOM GREY BLOB */}
+      {/* LOWER BACKGROUND GRAPHIC BLOB */}
       <MotiView
         from={{ opacity: 0, x: 100 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{
-          type: "timing",
-          duration: 1500,
-          delay: 500,
-        }}
+        transition={{ type: "timing", duration: 1500, delay: 500 }}
         style={[
           styles.graphicBlob,
           {
-            bottom: -70,
+            bottom: -50,
             right: -80,
             width: 250,
             height: 250,
-            backgroundColor:
-              "rgba(203, 213, 225, 0.25)",
+            backgroundColor: "rgba(203, 213, 225, 0.35)",
           },
         ]}
       />
 
       <KeyboardAvoidingView
-        behavior={
-          Platform.OS === "ios"
-            ? "padding"
-            : undefined
-        }
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
         <KeyboardAwareWrapper
           showsVerticalScrollIndicator={false}
           bounces={false}
-          contentContainerStyle={{
-            flexGrow: 1,
-          }}
+          contentContainerStyle={{ flexGrow: 1 }}
         >
-          {/* HEADER */}
+
+          {/* HEADER BACK UTILITY ACTION */}
           <MotiView
             from={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -275,31 +278,19 @@ const RegisterScreen = ({ navigation }) => {
               style={styles.backButton}
               activeOpacity={0.7}
             >
-              <Feather
-                name="chevron-left"
-                size={24}
-                color="#1E293B"
-              />
+              <Feather name="chevron-left" size={24} color="#1E293B" />
             </TouchableOpacity>
           </MotiView>
 
-          {/* MAIN CONTENT */}
+          {/* APPLICATION IDENTITY REGISTRATION INTERFACE */}
           <View style={styles.contentContainer}>
             <View style={styles.topSection}>
-              {/* ICON */}
+
+              {/* TOP CIRCULAR SYSTEM LOGO ICON */}
               <MotiView
-                from={{
-                  scale: 0.5,
-                  opacity: 0,
-                }}
-                animate={{
-                  scale: 1,
-                  opacity: 1,
-                }}
-                transition={{
-                  type: "spring",
-                  delay: 300,
-                }}
+                from={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", delay: 300 }}
                 style={styles.iconCircle}
               >
                 <MaterialCommunityIcons
@@ -309,7 +300,7 @@ const RegisterScreen = ({ navigation }) => {
                 />
               </MotiView>
 
-              {/* TITLE */}
+              {/* WELCOME HEADINGS TEXT EDIT */}
               <MotiText
                 from={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -328,309 +319,205 @@ const RegisterScreen = ({ navigation }) => {
                 Start your journey as a driver
               </MotiText>
 
-              {/* FORM */}
+              {/* INPUT FIELDS STRUCTURAL ELEMENT FORM */}
               <View style={styles.form}>
-                {/* FIRST NAME */}
+
+                {/* FIRST NAME INPUT */}
                 <InputField
                   icon="user"
                   placeholder="First Name"
                   value={firstName}
                   onChangeText={setFirstName}
+                  delay={600}
                 />
 
-                {/* LAST NAME */}
+                {/* LAST NAME INPUT */}
                 <InputField
                   icon="user"
                   placeholder="Last Name"
                   value={lastName}
                   onChangeText={setLastName}
+                  delay={650}
                 />
 
-                {/* EMAIL */}
+                {/* EMAIL ADDRESS INPUT */}
                 <MotiView
                   from={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 700 }}
                 >
-                  <View
-                    style={[
-                      styles.inputWrapper,
-                      emailError && styles.inputError,
-                    ]}
-                  >
+                  <View style={[styles.inputWrapper, emailError && styles.inputError]}>
                     <Feather
                       name="mail"
                       size={18}
-                      color={
-                        emailError ? "#EF4444" : "#94A3B8"
-                      }
+                      color={emailError ? "#EF4444" : "#94A3B8"}
                       style={styles.inputIcon}
                     />
-
                     <TextInput
                       style={styles.input}
                       placeholder="Email Address"
                       placeholderTextColor="#94A3B8"
                       value={email}
-                      onChangeText={(text) => {
-                        setEmail(text);
-                        if (emailError) setEmailError("");
-                      }}
+                      onChangeText={handleEmailChange}
                       keyboardType="email-address"
                       autoCapitalize="none"
                     />
-
-                    {email.length > 0 &&
-                      !emailError &&
-                      validateEmail(email) && (
-                        <Feather
-                          name="check-circle"
-                          size={18}
-                          color="#00A859"
-                        />
-                      )}
+                    {email.length > 0 && !emailError && validateEmail(email) && (
+                      <Feather name="check-circle" size={18} color="#00A859" />
+                    )}
                   </View>
-
-                  {emailError ? (
-                    <Text style={styles.errorText}>
-                      {emailError}
-                    </Text>
-                  ) : null}
+                  {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
                 </MotiView>
 
-                {/* PHONE */}
+                {/* PHONE NUMBER FIELD SYSTEM */}
                 <InputField
                   icon="phone"
                   placeholder="Phone Number"
                   value={phone}
                   onChangeText={setPhone}
                   keyboardType="phone-pad"
+                  delay={800}
                 />
 
-                {/* PASSWORD */}
+                {/* SECURE PASSWORD CREATION FIELD */}
                 <MotiView
                   from={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 900 }}
                 >
-                  <View
-                    style={[
-                      styles.inputWrapper,
-                      passwordError && styles.inputError,
-                    ]}
-                  >
+                  <View style={[styles.inputWrapper, passwordError && styles.inputError]}>
                     <Feather
                       name="lock"
                       size={18}
-                      color={
-                        passwordError ? "#EF4444" : "#94A3B8"
-                      }
+                      color={passwordError ? "#EF4444" : "#94A3B8"}
                       style={styles.inputIcon}
                     />
-
                     <TextInput
                       style={styles.input}
                       placeholder="Password"
                       placeholderTextColor="#94A3B8"
                       value={password}
                       secureTextEntry={!showPassword}
-                      onChangeText={(text) => {
-                        setPassword(text);
-                        if (passwordError) setPasswordError("");
-                      }}
-                      onFocus={() =>
-                        setPasswordFocused(true)
-                      }
-                      onBlur={() =>
-                        setPasswordFocused(false)
-                      }
+                      onChangeText={handlePasswordChange}
+                      onFocus={() => setPasswordFocused(true)}
+                      onBlur={() => setPasswordFocused(false)}
                     />
-
-                    <TouchableOpacity
-                      onPress={() =>
-                        setShowPassword(!showPassword)
-                      }
-                    >
+                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                       <Feather
-                        name={
-                          showPassword ? "eye" : "eye-off"
-                        }
+                        name={showPassword ? "eye" : "eye-off"}
                         size={18}
                         color={BRAND_GREEN}
                       />
                     </TouchableOpacity>
                   </View>
-
-                  {passwordError ? (
-                    <Text style={styles.errorText}>
-                      {passwordError}
-                    </Text>
-                  ) : null}
+                  {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
                 </MotiView>
 
-                {/* CONFIRM PASSWORD */}
+                {/* CONDITIONAL CONFIRM PASSWORD SUB-INPUT EXPANSION */}
                 {(passwordFocused || password.length > 0) && (
                   <MotiView
-                    from={{
-                      opacity: 0,
-                      y: 15,
-                    }}
-                    animate={{
-                      opacity: 1,
-                      y: 0,
-                    }}
-                    transition={{
-                      type: "timing",
-                      duration: 300,
-                    }}
+                    from={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ type: "timing", duration: 300 }}
                   >
-                    <View
-                      style={[
-                        styles.inputWrapper,
-                        confirmPasswordError &&
-                          styles.inputError,
-                      ]}
-                    >
+                    <View style={[styles.inputWrapper, confirmPasswordError && styles.inputError]}>
                       <Feather
                         name="lock"
                         size={18}
-                        color={
-                          confirmPasswordError
-                            ? "#EF4444"
-                            : "#94A3B8"
-                        }
+                        color={confirmPasswordError ? "#EF4444" : "#94A3B8"}
                         style={styles.inputIcon}
                       />
-
                       <TextInput
                         style={styles.input}
                         placeholder="Confirm Password"
                         placeholderTextColor="#94A3B8"
                         value={confirmPassword}
                         secureTextEntry={!showPassword}
-                        onChangeText={(text) => {
-                          setConfirmPassword(text);
-                          if (confirmPasswordError)
-                            setConfirmPasswordError("");
-                        }}
+                        onChangeText={handleConfirmPasswordChange}
                       />
-
-                      <TouchableOpacity
-                        onPress={() =>
-                          setShowPassword(!showPassword)
-                        }
-                      >
+                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                         <Feather
-                          name={
-                            showPassword
-                              ? "eye"
-                              : "eye-off"
-                          }
+                          name={showPassword ? "eye" : "eye-off"}
                           size={18}
                           color={BRAND_GREEN}
                         />
                       </TouchableOpacity>
                     </View>
-
                     {confirmPasswordError ? (
-                      <Text style={styles.errorText}>
-                        {confirmPasswordError}
-                      </Text>
+                      <Text style={styles.errorText}>{confirmPasswordError}</Text>
                     ) : null}
                   </MotiView>
                 )}
 
-                {/* TERMS */}
-                <View style={styles.termsRow}>
+                {/* POLICY AND TERMS VERIFICATION CHECKBOX LAYOUT */}
+                <MotiView
+                  from={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1000 }}
+                  style={styles.termsRow}
+                >
                   <TouchableOpacity
-                    onPress={() =>
-                      setAgree(!agree)
-                    }
+                    onPress={() => setAgree(!agree)}
                     style={[
                       styles.checkbox,
                       agree && {
-                        backgroundColor:
-                          BRAND_GREEN,
-                        borderColor:
-                          BRAND_GREEN,
+                        backgroundColor: BRAND_GREEN,
+                        borderColor: BRAND_GREEN,
                       },
                     ]}
                   >
                     {agree && (
-                      <Feather
-                        name="check"
-                        size={13}
-                        color="#FFF"
-                      />
+                      <Feather name="check" size={13} color="#FFF" />
                     )}
                   </TouchableOpacity>
 
                   <Text style={styles.termsText}>
                     I agree to the{" "}
-                    <Text style={styles.linkText}>
-                      Terms of Service
-                    </Text>{" "}
-                    and{" "}
-                    <Text style={styles.linkText}>
-                      Privacy Policy
-                    </Text>
+                    <Text style={styles.linkText}>Terms of Service</Text> and{" "}
+                    <Text style={styles.linkText}>Privacy Policy</Text>
                   </Text>
-                </View>
+                </MotiView>
 
-                {/* BUTTON */}
-                <TouchableOpacity
-                  style={styles.continueBtn}
-                  onPress={handleRegister}
-                  activeOpacity={0.9}
-                  disabled={isLoading}
+                {/* PRIMARY ACTION REGISTRATION EMISSION BUTTON */}
+                <MotiView
+                  from={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 1100, type: "spring" }}
                 >
-                  {isLoading ? (
-                    <ActivityIndicator
-                      color="#FFF"
-                    />
-                  ) : (
-                    <Text
-                      style={
-                        styles.continueBtnText
-                      }
-                    >
-                      Continue
-                    </Text>
-                  )}
-                </TouchableOpacity>
-
-                {/* FOOTER */}
-                <View style={styles.footer}>
-                  <Text style={styles.footerText}>
-                    Already have an account?
-                  </Text>
-
                   <TouchableOpacity
-                    onPress={() =>
-                      navigation?.navigate(
-                        "Login"
-                      )
-                    }
+                    style={styles.continueBtn}
+                    onPress={handleRegister}
+                    activeOpacity={0.9}
+                    disabled={isLoading}
                   >
-                    <Text style={styles.signInText}>
-                      {" "}
-                      Sign In
-                    </Text>
+                    {isLoading ? (
+                      <ActivityIndicator color="#FFF" />
+                    ) : (
+                      <Text style={styles.continueBtnText}>Continue</Text>
+                    )}
                   </TouchableOpacity>
-                </View>
+                </MotiView>
+
+                {/* REDIRECT ANCHOR LINK SWITCH TO SIGN IN SCREEN */}
+                <MotiView
+                  from={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1200 }}
+                  style={styles.footer}
+                >
+                  <Text style={styles.footerText}>Already have an account?</Text>
+                  <TouchableOpacity onPress={() => navigation?.navigate("Login")}>
+                    <Text style={styles.signInText}> Sign In</Text>
+                  </TouchableOpacity>
+                </MotiView>
+
               </View>
             </View>
 
-            {/* IMAGE */}
+            {/* ARTWORK VECTOR GRAPHIC LAYOUT PLACEMENT */}
             <MotiView
-              from={{
-                opacity: 0,
-                translateY: 40,
-              }}
-              animate={{
-                opacity: 1,
-                translateY: 0,
-              }}
+              from={{ opacity: 0, translateY: 40 }}
+              animate={{ opacity: 1, translateY: 0 }}
               transition={{
                 delay: 1400,
                 duration: 900,
@@ -644,86 +531,54 @@ const RegisterScreen = ({ navigation }) => {
                 resizeMode="contain"
               />
             </MotiView>
+
           </View>
         </KeyboardAwareWrapper>
       </KeyboardAvoidingView>
 
-      {/* MODERN CUSTOM POPUP */}
-      <Modal
-        transparent
-        visible={popupVisible}
-        animationType="fade"
-      >
+      {/* SYSTEM POPUP */}
+      <Modal transparent visible={popupVisible} animationType="fade">
         <View style={styles.popupOverlay}>
           <MotiView
-            from={{
-              opacity: 0,
-              scale: 0.8,
-              translateY: 20,
-            }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-              translateY: 0,
-            }}
-            transition={{
-              type: "spring",
-            }}
+            from={{ opacity: 0, scale: 0.8, translateY: 20 }}
+            animate={{ opacity: 1, scale: 1, translateY: 0 }}
+            transition={{ type: "spring" }}
             style={styles.popupCard}
           >
             <View
               style={[
                 styles.popupIconCircle,
-                popupType === "error" && {
-                  backgroundColor:
-                    "rgba(239,68,68,0.12)",
-                },
-                popupType === "warning" && {
-                  backgroundColor:
-                    "rgba(245,158,11,0.12)",
-                },
+                popupType === "error" && { backgroundColor: "rgba(239,68,68,0.12)" },
+                popupType === "warning" && { backgroundColor: "rgba(245,158,11,0.12)" },
               ]}
             >
               <Feather
-                name={
-                  popupType === "warning"
-                    ? "alert-triangle"
-                    : "x"
-                }
+                name={popupType === "warning" ? "alert-triangle" : "x"}
                 size={26}
-                color={
-                  popupType === "warning"
-                    ? "#F59E0B"
-                    : "#EF4444"
-                }
+                color={popupType === "warning" ? "#F59E0B" : "#EF4444"}
               />
             </View>
 
-            <Text style={styles.popupTitle}>
-              {popupTitle}
-            </Text>
+            <Text style={styles.popupTitle}>{popupTitle}</Text>
 
-            <Text style={styles.popupMessage}>
-              {popupMessage}
-            </Text>
+            <Text style={styles.popupMessage}>{popupMessage}</Text>
 
             <TouchableOpacity
               style={styles.popupButton}
-              onPress={() =>
-                setPopupVisible(false)
-              }
+              onPress={() => {
+                setPopupVisible(false);
+                if (typeof popupAction === "function") {
+                  popupAction();
+                }
+              }}
             >
-              <Text
-                style={styles.popupButtonText}
-              >
-                OK
-              </Text>
+              <Text style={styles.popupButtonText}>{popupButtonText}</Text>
             </TouchableOpacity>
           </MotiView>
         </View>
       </Modal>
 
-      {/* BOTTOM SAFE AREA */}
+      {/* SYSTEM DEVICE LOWER BAR VIEW FILL */}
       <SafeAreaView
         edges={["bottom"]}
         style={styles.bottomSafeArea}
@@ -732,18 +587,18 @@ const RegisterScreen = ({ navigation }) => {
   );
 };
 
-// REUSABLE INPUT
 const InputField = ({
   icon,
   placeholder,
   value,
   onChangeText,
   keyboardType,
+  delay = 600,
 }) => (
   <MotiView
     from={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 600 }}
+    transition={{ delay }}
     style={styles.inputWrapper}
   >
     <Feather
@@ -771,136 +626,96 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     overflow: "hidden",
   },
-
   graphicBlob: {
     position: "absolute",
-    borderRadius: 180,
+    borderRadius: 160,
   },
-
   header: {
     paddingHorizontal: 20,
-
-    paddingTop:
-      Platform.OS === "android"
-        ? (StatusBar.currentHeight || 0) + 5
-        : 45,
-
-    marginBottom: 2,
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 5 : 45,
+    marginBottom: 5,
     zIndex: 10,
   },
-
   backButton: {
     width: 42,
     height: 42,
     borderRadius: 12,
-
     backgroundColor: "#FFFFFF",
-
     justifyContent: "center",
     alignItems: "center",
-
     borderWidth: 1,
     borderColor: "#E2E8F0",
-
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
   },
-
   contentContainer: {
     flex: 1,
     paddingHorizontal: 24,
     justifyContent: "space-between",
     alignItems: "center",
   },
-
   topSection: {
     width: "100%",
     alignItems: "center",
   },
-
   iconCircle: {
-    width: 72,
-    height: 72,
+    width: 74,
+    height: 74,
     borderRadius: 22,
-
     backgroundColor: "#FFFFFF",
-
     justifyContent: "center",
     alignItems: "center",
-
     marginBottom: 10,
-
     borderWidth: 1,
-    borderColor: "rgba(0,168,89,0.1)",
-
+    borderColor: "rgba(0, 168, 89, 0.1)",
     shadowColor: "#00A859",
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
     shadowRadius: 15,
     elevation: 4,
   },
-
   title: {
     fontSize: 30,
     fontWeight: "900",
     color: "#0F172A",
-
     marginBottom: 4,
     letterSpacing: -0.5,
   },
-
   subtitle: {
     fontSize: 14,
     color: "#64748B",
-    marginBottom: 18,
+    marginBottom: 20,
   },
-
   form: {
     width: "100%",
   },
-
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-
-    backgroundColor:
-      "rgba(255,255,255,0.95)",
-
+    backgroundColor: "rgba(255,255,255,0.92)",
     borderRadius: 16,
     paddingHorizontal: 15,
-
     height: 54,
-    marginBottom: 11,
-
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: "#E2E8F0",
   },
-
   inputIcon: {
     marginRight: 10,
   },
-
   input: {
     flex: 1,
     color: "#0F172A",
     fontSize: 14,
     fontWeight: "600",
   },
-
   inputError: {
     borderColor: "#EF4444",
     borderWidth: 1.5,
   },
-
   errorText: {
     color: "#EF4444",
     fontSize: 12,
@@ -909,168 +724,122 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontWeight: "600",
   },
-
   termsRow: {
     flexDirection: "row",
     alignItems: "center",
-
     marginTop: 2,
     marginBottom: 18,
   },
-
   checkbox: {
     width: 22,
     height: 22,
     borderRadius: 7,
-
     borderWidth: 2,
     borderColor: "#E2E8F0",
-
     marginRight: 10,
-
     justifyContent: "center",
     alignItems: "center",
   },
-
   termsText: {
     flex: 1,
     color: "#64748B",
     fontSize: 12,
     lineHeight: 18,
   },
-
   linkText: {
     color: "#00A859",
     fontWeight: "700",
   },
-
   continueBtn: {
     backgroundColor: "#00A859",
-
     height: 54,
     borderRadius: 16,
-
     justifyContent: "center",
     alignItems: "center",
-
     shadowColor: "#00A859",
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 8,
   },
-
   continueBtnText: {
     color: "#FFF",
     fontSize: 16,
     fontWeight: "900",
     letterSpacing: 0.5,
   },
-
   footer: {
     flexDirection: "row",
     justifyContent: "center",
-
-    marginTop: 16,
-    marginBottom: 6,
+    marginTop: 18,
+    marginBottom: 0,
   },
-
   footerText: {
     color: "#64748B",
     fontSize: 13,
   },
-
   signInText: {
     color: "#00A859",
     fontWeight: "800",
     fontSize: 13,
   },
-
-  /* IMAGE FIX */
   carImageWrapper: {
     width: width,
     alignItems: "center",
-
-    marginTop: 0,
-    marginBottom: -10,
+    marginTop: 5,
   },
-
   carImage: {
-    width: width * 20.02,
+    width: width * 1.08,
     height: height * 0.22,
   },
-
-  /* MODERN POPUP */
   popupOverlay: {
     flex: 1,
     backgroundColor: "rgba(15,23,42,0.45)",
-
     justifyContent: "center",
     alignItems: "center",
-
     paddingHorizontal: 24,
   },
-
   popupCard: {
     width: "100%",
     backgroundColor: "#FFF",
-
     borderRadius: 28,
     padding: 24,
-
     alignItems: "center",
   },
-
   popupIconCircle: {
     width: 70,
     height: 70,
     borderRadius: 35,
-
     justifyContent: "center",
     alignItems: "center",
-
     marginBottom: 18,
   },
-
   popupTitle: {
     fontSize: 20,
     fontWeight: "900",
     color: "#0F172A",
-
     marginBottom: 8,
   },
-
   popupMessage: {
     fontSize: 14,
     color: "#64748B",
-
     textAlign: "center",
     lineHeight: 22,
-
     marginBottom: 22,
   },
-
   popupButton: {
     backgroundColor: "#00A859",
-
     width: "100%",
     height: 52,
-
     borderRadius: 16,
-
     justifyContent: "center",
     alignItems: "center",
   },
-
   popupButtonText: {
     color: "#FFF",
     fontSize: 15,
     fontWeight: "800",
   },
-
   bottomSafeArea: {
     backgroundColor: "#000000",
   },

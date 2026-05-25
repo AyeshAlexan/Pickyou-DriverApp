@@ -12,6 +12,7 @@ import VehicleDetailsScreen from "../screens/VehicleDeatilsScreem";
 import VerificationScreen from "../screens/VerificationScreen";
 import DocumentsScreen from "../screens/Main Screen/DocumentsScreen";
 import DocumentPreviewScreen from "../screens/Main Screen/DocumentPreviewScreen";
+import ComingSoonScreen from "../screens/ComingSoonScreen";
 import BottomTabs from "./BottomTabs";
 
 const Stack = createNativeStackNavigator();
@@ -24,7 +25,7 @@ const MainNavigator = ({
   setDriverStatus,
   driver = null,
 }) => {
-  
+
   // Back-end Exit handler logic
   const handleExitToGetStarted = () => {
     setIsLoggedIn(false);
@@ -59,13 +60,16 @@ const MainNavigator = ({
 
       // Validation gates
       if (status === "show_approved_screen") return "Verification";
-      if (status === "approved") return "MainTabs";
+      if (status === "approved") return "ComingSoon";
+      // if (status === "approved") return "MainTabs";
       if (status === "pending" || status === "rejected") return "Verification";
     }
 
     // Direct Fallbacks when live driver context payload structure isn't populated
     if (status === "show_approved_screen") return "Verification";
-    if (status === "approved") return "MainTabs";
+    //
+    if (status === "approved") return "ComingSoon";
+    //  if (status === "approved") return "MainTabs";
     if (isNewUser) return "ProfileSet";
     if (status === "pending" || status === "rejected") return "Verification";
 
@@ -128,6 +132,17 @@ const MainNavigator = ({
       </Stack.Screen>
 
       {/* ==================== MAIN CORE APP ==================== */}
+      <Stack.Screen name="ComingSoon">
+        {(props) => (
+          <ComingSoonScreen
+            {...props}
+            setIsLoggedIn={setIsLoggedIn}
+            setIsNewUser={setIsNewUser}
+            setDriverStatus={setDriverStatus}
+          />
+        )}
+      </Stack.Screen>
+
       <Stack.Screen name="MainTabs">
         {(props) => (
           <BottomTabs

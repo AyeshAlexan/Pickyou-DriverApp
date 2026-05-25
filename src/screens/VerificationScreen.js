@@ -402,7 +402,7 @@ const VerificationStatusScreen = ({ navigation, setIsLoggedIn, setDriverStatus, 
             await AsyncStorage.setItem("hasSeenApproved", "true");
             setDriverStatus?.("approved");
             setIsNewUser?.(false);
-            navigation.replace("MainTabs");
+            navigation.replace("AppBuilding");
           }
         }}
       >
